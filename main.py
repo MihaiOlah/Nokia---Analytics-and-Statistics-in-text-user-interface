@@ -21,7 +21,7 @@ def print_stat_0_4_formatted(result, run_on_scenario, case):             # forma
     else:
         intersection = list()
         for j in run_on_scenario:
-            j = j.upper()
+            #j = j.upper()
             if j in result:
                 intersection.append(j)
         print('Nodes without {} {}'.format(case, intersection))
@@ -37,7 +37,7 @@ def print_stat_5_8_formatted(result, case, run_on_scenario):
             has_printed = True
     else:
         for j in run_on_scenario:
-            j = j.upper()
+            #j = j.upper()
             if j in result.keys():
                 for k in result[j]:
                     print('Broken {} from {} to {}'.format(case, k, j))
@@ -51,6 +51,7 @@ def print_stat_9_formatted(invalid_references_self, invalid_references_to_others
     has_printed = False
 
     if run_on_scenario == 'all':
+        # for each found, we display each value found
         for i in invalid_references_self.items():
             for reference in i[1]:
                 print('Reference {} was not found in node {}\'s tags'.format(reference, i[0]))
@@ -62,13 +63,13 @@ def print_stat_9_formatted(invalid_references_self, invalid_references_to_others
                 has_printed = True
     else:
         for i in invalid_references_self.items():
-            if i in run_on_scenario:
+            if i[0] in run_on_scenario:
                 for reference in i[1]:
                     print('Reference {} was not found in node {}\'s tags'.format(reference, i[0]))
                     has_printed = True
 
         for i in invalid_references_to_others.items():
-            if i in run_on_scenario:
+            if i[0] in run_on_scenario:
                 for value in i[1]:
                     print('In node {}, reference {} was found in {}, but node {} was not found in {}\'s {}'.format(i[0], value[1], value[0], i[0], value[1], value[2]))
                     has_printed = True

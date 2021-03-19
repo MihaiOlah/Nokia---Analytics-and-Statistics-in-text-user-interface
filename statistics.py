@@ -115,6 +115,9 @@ def stat_09(nodes):
     invalid_references_self = dict()                # reference not appearing in node's fields
     invalid_references_to_others = dict()           # references' origin node not found in other nodes' tags
 
+    # for each node we check if the references appear in node's tags and if they appear
+    # we search if the node appears in one of the logically correct tags
+    # (eg if reference appears in node's preconditions, the node must appear in references' postconditions)
     for node in nodes.items():
         new_references = list()
         for reference in node[1].get_references():
@@ -148,26 +151,5 @@ def stat_09(nodes):
             else:
                 new_references.append(reference)
         node[1].set_references(new_references)
-    """
-                elif ((reference in node[1].get_postconditions()) and (node[0] not in nodes[reference].get_preconditions())) or \
-                ((reference in node[1].get_triggers()) and (node[0] not in nodes[reference].get_description())) or \
-                ((reference in node[1].get_description()) and (node[0] not in nodes[reference].get_triggers())):
-                print()
-    
-    for node in nodes.items():
-        new_references = list()
-        for reference in node[1].get_references():
-            if not ((reference in node[1].get_preconditions() and node[0] in nodes[reference].get_postconditions()) or \
-                (reference in node[1].get_postconditions() and node[0] in nodes[reference].get_preconditions()) or \
-                (reference in node[1].get_triggers() and node[0] in nodes[reference].get_description()) or \
-                (reference in node[1].get_description() and node[0] in nodes[reference].get_triggers())):
 
-                if node[0] not in invalid_references.keys():
-                    invalid_references[node[0]] = [reference]
-                else:
-                    invalid_references[node[0]].append(reference)
-            else:
-                new_references.append(reference)
-        node[1].set_references(new_references)
-    """
     return invalid_references_self, invalid_references_to_others
