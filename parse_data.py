@@ -112,15 +112,15 @@ def node_name_in_own_tags(nodes):
     return nodes, flagged_nodes
 
 def read_data(path, *argv):
-    nodes, duplicates = parse_xml('C:\\Users\\Mihai\\Desktop\\Proiect\\date.xml')
-    #nodes, duplicates = parse_xml(path)
+    #nodes, duplicates = parse_xml('C:\\Users\\Mihai\\Desktop\\Proiect\\date.xml')
+    nodes, duplicates = parse_xml(path)
     nodes, nonExistentNodes = clear_non_existent_nodes(nodes)
     nodes, flagged_nodes = node_name_in_own_tags(nodes)
 
-    for i in nodes.values():
-        print('{}\n'.format(i))
+    #for i in nodes.values():
+        #print('{}\n'.format(i))
 
-    if '-i' not in argv:
+    if argv[0] == False:                # check if ignore option (-i/--ignore) is enabled or not
         if bool(duplicates):            # check if dictionary is empty
             print("Duplicate nodes in file:")
             for i in duplicates.items():
@@ -131,3 +131,5 @@ def read_data(path, *argv):
 
         if len(flagged_nodes) != 0:     # check if set is empty
             print("Nodes being referenced in their own tags:\n" + str(flagged_nodes) + '\n')
+
+    return nodes
