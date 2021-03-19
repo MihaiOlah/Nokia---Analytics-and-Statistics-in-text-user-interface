@@ -112,8 +112,48 @@ def stat_08(nodes):
     return link_post_pre
 
 def stat_09(nodes):
-    invalid_references = dict()
+    invalid_references_self = dict()                # reference not appearing in node's fields
+    invalid_references_to_others = dict()           # references' origin node not found in other nodes' tags
 
+    for node in nodes.items():
+        new_references = list()
+        for reference in node[1].get_references():
+            if (reference not in node[1].get_preconditions()) and (reference not in node[1].get_triggers()) \
+                                 and (reference not in node[1].get_description()) and (reference not in node[1].get_postconditions()):   # checking if the reference does not appear in node's tags
+                if node[0] not in invalid_references_self.keys():
+                    invalid_references_self[node[0]] = [reference]
+                else:
+                    invalid_references_self[node[0]].append(reference)
+            # checking if the node is found in other's tags
+            elif (reference in node[1].get_preconditions()) and (node[0] not in nodes[reference].get_postconditions()):
+                if node[0] not in invalid_references_to_others.keys():
+                    invalid_references_to_others[node[0]] = [('preconditions', reference, 'postconditions')]
+                else:
+                    invalid_references_to_others[node[0]].append(('preconditions', reference, 'postconditions'))
+            elif (reference in node[1].get_postconditions()) and (node[0] not in nodes[reference].get_preconditions()):
+                if node[0] not in invalid_references_to_others.keys():
+                    invalid_references_to_others[node[0]] = [('postconditions', reference, 'preconditions')]
+                else:
+                    invalid_references_to_others[node[0]].append(('postconditions', reference, 'preconditions'))
+            elif (reference in node[1].get_triggers()) and (node[0] not in nodes[reference].get_description()):
+                if node[0] not in invalid_references_to_others.keys():
+                    invalid_references_to_others[node[0]] = [('triggers', reference, 'description')]        # triplet containg data for display
+                else:
+                    invalid_references_to_others[node[0]].append(('triggers', reference, 'description'))
+            elif (reference in node[1].get_description()) and (node[0] not in nodes[reference].get_triggers()):
+                if node[0] not in invalid_references_to_others.keys():
+                    invalid_references_to_others[node[0]] = [('description', reference, 'triggers')]
+                else:
+                    invalid_references_to_others[node[0]].append(('description', reference, 'triggers'))
+            else:
+                new_references.append(reference)
+        node[1].set_references(new_references)
+    """
+                elif ((reference in node[1].get_postconditions()) and (node[0] not in nodes[reference].get_preconditions())) or \
+                ((reference in node[1].get_triggers()) and (node[0] not in nodes[reference].get_description())) or \
+                ((reference in node[1].get_description()) and (node[0] not in nodes[reference].get_triggers())):
+                print()
+    
     for node in nodes.items():
         new_references = list()
         for reference in node[1].get_references():
@@ -129,5 +169,5 @@ def stat_09(nodes):
             else:
                 new_references.append(reference)
         node[1].set_references(new_references)
-
-    return invalid_references
+    """
+    return invalid_references_self, invalid_references_to_others

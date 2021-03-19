@@ -25,8 +25,9 @@ def print_stat_0_4_formatted(result, run_on_scenario, case):             # forma
             if j in result:
                 intersection.append(j)
         print('Nodes without {} {}'.format(case, intersection))
+    print()
 
-def print_stat_5_9_formatted(result, case, run_on_scenario):
+def print_stat_5_8_formatted(result, case, run_on_scenario):
     has_printed = False
     print(case.upper())
     if run_on_scenario == 'all':
@@ -42,6 +43,35 @@ def print_stat_5_9_formatted(result, case, run_on_scenario):
                     print('Broken {} from {} to {}'.format(case, k, j))
                 has_printed = True
 
+    if has_printed:
+        print()
+
+def print_stat_9_formatted(invalid_references_self, invalid_references_to_others, run_on_scenario):
+    print('REFERENCES')
+    has_printed = False
+
+    if run_on_scenario == 'all':
+        for i in invalid_references_self.items():
+            for reference in i[1]:
+                print('Reference {} was not found in node {}\'s tags'.format(reference, i[0]))
+                has_printed = True
+
+        for i in invalid_references_to_others.items():
+            for value in i[1]:
+                print('In node {}, reference {} was found in {}, but node {} was not found in {}\'s {}'.format(i[0], value[1], value[0], i[0], value[1], value[2]))
+                has_printed = True
+    else:
+        for i in invalid_references_self.items():
+            if i in run_on_scenario:
+                for reference in i[1]:
+                    print('Reference {} was not found in node {}\'s tags'.format(reference, i[0]))
+                    has_printed = True
+
+        for i in invalid_references_to_others.items():
+            if i in run_on_scenario:
+                for value in i[1]:
+                    print('In node {}, reference {} was found in {}, but node {} was not found in {}\'s {}'.format(i[0], value[1], value[0], i[0], value[1], value[2]))
+                    has_printed = True
     if has_printed:
         print()
 
@@ -68,24 +98,26 @@ def check_options(options, nodes, run_on_scenario):
             print_stat_0_4_formatted(stat_04(nodes), run_on_scenario, 'references')
         elif i == 5:
             #print(stat_05(nodes))
-            print_stat_5_9_formatted(stat_05(nodes), 'precondition to postcondition link', run_on_scenario)
+            print_stat_5_8_formatted(stat_05(nodes), 'precondition to postcondition link', run_on_scenario)
         elif i == 6:
             #print(stat_06(nodes))
-            print_stat_5_9_formatted(stat_06(nodes), 'trigger to description link', run_on_scenario)
+            print_stat_5_8_formatted(stat_06(nodes), 'trigger to description link', run_on_scenario)
         elif i == 7:
             #print(stat_07(nodes))
-            print_stat_5_9_formatted(stat_07(nodes), 'description to trigger link', run_on_scenario)
+            print_stat_5_8_formatted(stat_07(nodes), 'description to trigger link', run_on_scenario)
         elif i == 8:
             #print(stat_08(nodes))
-            print_stat_5_9_formatted(stat_08(nodes), 'postcondition to precondition link', run_on_scenario)
+            print_stat_5_8_formatted(stat_08(nodes), 'postcondition to precondition link', run_on_scenario)
         elif i == 9:
-            #print(stat_09(nodes))
-            print_stat_5_9_formatted(stat_05(nodes), 'references', run_on_scenario)
+            invalid_references_self, invalid_references_to_others = stat_09(nodes)
+            print_stat_9_formatted(invalid_references_self, invalid_references_to_others, run_on_scenario)
         else:
             print('Option does not exist')
 
 def main():
     args = parse_args()
+    if args.runOnScenario != 'all':                                 # all scenarios will be transformed to upper case, because names are case insensitive
+        args.runOnScenario = [i.upper() for i in args.runOnScenario]
     nodes = read_data(args.fileName, args.ignore)
     check_options(args.checkStatistic, nodes, args.runOnScenario)
 
