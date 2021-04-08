@@ -31,7 +31,7 @@ class Node:
         return self.postconditions
 
     def get_references(self):
-        return self.references
+                     return self.references
 
     def remove_preconditions(self, node):
         self.preconditions.remove(node)

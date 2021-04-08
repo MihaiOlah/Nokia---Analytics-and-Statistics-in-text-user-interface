@@ -1,3 +1,6 @@
+paths = list()
+cycles = list()
+
 def stat_00(nodes):
     withoutPreconditions = list()           # list containing the nodes without precondition
 
@@ -153,3 +156,119 @@ def stat_09(nodes):
         node[1].set_references(new_references)
 
     return invalid_references_self, invalid_references_to_others
+
+# in depth graph traversal and backtracking for finding all paths
+# the paths are added to the global variable "paths"
+# each time a longer path is found, the content of "paths" is deleted and the new longest path is added
+# if there are multiple path, then they are added among the rest of the longest paths
+def scenario_traversal(nodes, root, pre_post, trig_desc, path = []):
+    global paths
+
+    if root not in path:
+
+        path.append(root)
+
+        if not pre_post and not trig_desc:      # default directions
+            neighbours = nodes[root].get_postconditions() + nodes[root].get_description()
+        elif pre_post and not trig_desc:        # reverse precond-postcond direction
+            neighbours = nodes[root].get_preconditions() + nodes[root].get_description()
+        elif not pre_post and trig_desc:        # reverse trigger-description direction
+            neighbours = nodes[root].get_postconditions() + nodes[root].get_triggers()
+        else:                                   # reverse both direction
+            neighbours = nodes[root].get_preconditions() + nodes[root].get_triggers()
+
+        for neighbour in neighbours:
+            path = scenario_traversal(nodes, neighbour, pre_post, trig_desc, path)
+        else:
+            if len(paths) > 0:
+                if len(paths[0]) < len(path):
+                    paths = list()
+                    paths.append(list(path))
+                elif len(paths[0]) == len(path):
+                    paths.append(list(path))
+            else:
+                paths.append(list(path))
+
+            if len(path) > 0 and root in path:
+                path.pop()
+
+    if len(paths) > 0:
+        if len(paths[0]) < len(path):
+            paths = list()
+            paths.append(list(path))
+        elif len(paths[0]) == len(path):
+            paths.append(list(path))
+    else:
+        paths.append(list(path))
+
+    return path
+
+def stat_10(nodes, root_nodes, pre_post, trig_desc):
+    global paths
+
+    for root in root_nodes:
+        scenario_traversal(nodes, root, pre_post, trig_desc)
+
+    return paths
+
+# in depth graph traversal and backtracking for finding all paths
+# the paths are added to the global variable "paths"
+# each time a longer path is found, the content of "paths" is deleted and the new longest path is added
+# if there are multiple path, then they are added among the rest of the longest paths
+def scenario_traversal_cycle(nodes, root, pre_post, trig_desc, cycle = []):
+    global cycles
+
+    if root not in cycle:
+
+        cycle.append(root)
+
+        if not pre_post and not trig_desc:      # default directions
+            neighbours = nodes[root].get_postconditions() + nodes[root].get_description()
+        elif pre_post and not trig_desc:        # reverse precond-postcond direction
+            neighbours = nodes[root].get_preconditions() + nodes[root].get_description()
+        elif not pre_post and trig_desc:        # reverse trigger-description direction
+            neighbours = nodes[root].get_postconditions() + nodes[root].get_triggers()
+        else:                                   # reverse both direction
+            neighbours = nodes[root].get_preconditions() + nodes[root].get_triggers()
+
+        for neighbour in neighbours:
+            cycle = scenario_traversal_cycle(nodes, neighbour, pre_post, trig_desc, cycle)
+        else:
+        #    if len(paths) > 0:
+         #       if len(paths[0]) < len(cycle):
+          #          paths = list()
+           #         paths.append(list(cycle))
+            #    elif len(paths[0]) == len(cycle):
+             #       paths.append(list(cycle))
+           # else:
+            #cycles.append(list(cycle))
+
+            #if len(cycle) > 0 and root in cycle:
+            cycle.pop()
+
+    else:
+        if root == cycle[0]:
+            cycle.append(root)
+
+            #if len(cycles) > 0:
+             #   if len(cycles[0]) < len(cycle):
+              #      cycles = list()
+               #     cycles.append(list(cycle))
+               # elif len(cycles[0]) == len(cycle):
+                #    cycles.append(list(cycle))
+            #else:
+            cycles.append(list(cycle))
+            cycle.pop()
+        else:
+            return cycle
+    return cycle
+
+def stat_12(nodes, root_nodes, pre_post, trig_desc):
+    global cycles
+
+    for root in root_nodes:
+        scenario_traversal_cycle(nodes, root, pre_post, trig_desc)
+
+    #print(cycles)
+
+    return cycles

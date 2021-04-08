@@ -17,14 +17,15 @@ def parse_xml(path):
     #node[5] -> postconditions
     #node[6] -> references
     for node in root.findall("./node"):
-        if node[0].text not in nodes.keys():        #if the node appears for the first time, we add it to the main dictionary
+        nodes_keys_upper = [x.upper() for x in nodes.keys()]
+        if node[0].text.upper() not in nodes_keys_upper:        #if the node appears for the first time, we add it to the main dictionary
             nodes[node[0].text] = Node(node[0].text, node[1].text, [i.text for i in node[2]],
             [i.text for i in node[3]], [i.text for i in node[4]], [i.text for i in node[5]],
             [i.text for i in node[6]])
-        elif node[0].text not in duplicates.keys(): #if the node appears the second time, we add it to the duplicates
-            duplicates[node[0].text] = 2
+        elif node[0].text.upper() not in duplicates.keys(): #if the node appears the second time, we add it to the duplicates
+            duplicates[node[0].text.upper()] = 2
         else:                                       #if the node appears more than two times, the number of appearances is updated
-            duplicates[node[0].text] = duplicates.get(node[0].text) + 1
+            duplicates[node[0].text.upper()] = duplicates.get(node[0].text.upper()) + 1
 
 
     #for i in nodes.values():
