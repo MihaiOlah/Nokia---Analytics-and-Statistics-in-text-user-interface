@@ -156,25 +156,29 @@ def print_stat_13_formatted(results, run_on_scenario):
 
     print("Results found: {}".format(str(cont)))
 
-def print_stat_14_formatted(results, run_on_scenario, top):
-    print('TOP MOST CONSUMING SCENARIOS')
+def print_stat_14_formatted(results, top):
+    print('TOP {} MOST CONSUMING SCENARIOS'.format(top))
     cont = 0
-    """
-    if run_on_scenario == 'all':
-        for i in results:
-            print(str(i)[1:-1])
+
+    top_values = list(set(results.values()))      # set containing the unique values
+    top_values.sort(reverse=True)
+
+    result_tuples = list()
+    for item in results.items():
+        result_tuples.append((item[0], item[1]))
+    result_tuples.sort(reverse=True, key=lambda t: t[1])
+
+    j = 0
+    result_len = len(result_tuples)
+    if top > len(top_values):
+        top = len(top_values)
+    for i in range(top):
+        while j < result_len and result_tuples[j][1] == top_values[i]:
+            print('{}: {}'.format(result_tuples[j][0], result_tuples[j][1]))
+            j = j + 1
             cont = cont + 1
-    else:
-        for path in results:
-            path_upper = [x.upper() for x in path]
-            for scenario in run_on_scenario:
-                if scenario.upper() in path_upper:
-                    print("Scenario {} is found in cycle: {}".format(scenario, str(path)[1:-1]))
-                    cont = cont + 1
 
-    print("Results found: {}".format(str(cont)))
-    """
-
+    print('Result printed {}'.format(cont))
 
 def check_options(options, nodes, run_on_scenario, pre_post, trig_desc, top):
     if options == -1:
@@ -232,7 +236,7 @@ def check_options(options, nodes, run_on_scenario, pre_post, trig_desc, top):
         elif i == 13:
             print_stat_13_formatted(rez_stat_12, run_on_scenario)
         elif i == 14:
-            print_stat_14_formatted(rez_stat_14, run_on_scenario, top)
+            print_stat_14_formatted(rez_stat_14, top)
         else:
             print('Option does not exist')
 
