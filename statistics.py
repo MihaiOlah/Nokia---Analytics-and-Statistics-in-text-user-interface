@@ -1,5 +1,6 @@
 paths = list()
 cycles = list()
+top_resources = dict()
 
 def stat_00(nodes):
     withoutPreconditions = list()           # list containing the nodes without precondition
@@ -263,12 +264,63 @@ def scenario_traversal_cycle(nodes, root, pre_post, trig_desc, cycle = []):
             return cycle
     return cycle
 
+def remove_cycles(nodes, cycles):
+    for cycle in cycles:
+        for node_index in range(len(cycle) - 1):
+            cur_node = cycle[node_index]
+            next_node = cycle[node_index + 1]
+
+            if next_node in nodes[cur_node].get_postconditions():
+                nodes[cur_node].remove_postconditions(next_node)
+                nodes[next_node].remove_preconditions(cur_node)
+            elif next_node in nodes[cur_node].get_description():                           # if next node it's not in postconditions, then it's in description
+                nodes[cur_node].remove_description(next_node)
+                nodes[next_node].remove_triggers(cur_node)
+
+    return nodes
+
 def stat_12(nodes, root_nodes, pre_post, trig_desc):
     global cycles
 
     for root in root_nodes:
         scenario_traversal_cycle(nodes, root, pre_post, trig_desc)
 
-    #print(cycles)
-
     return cycles
+
+# if a scenario is leaf, it costs 1 to be executed
+# if a scenario is not leaf, it costs 1 (value of itself) + sum of the values of the children scenarios
+def stat_14(nodes, pre_post, trig_desc):
+    global top_resources
+    global cycles
+
+    nodes_copy = dict(nodes)
+    nodes_copy = remove_cycles(nodes_copy, cycles)
+
+    not_leaves_nodes = list()
+    leaves_nodes = set(stat_02(nodes_copy)).intersection(stat_03(nodes_copy))   # set containing leaves scenarios
+    for leaf in leaves_nodes:       # each leaf consts 1, because it's only the value of itself
+        top_resources[leaf] = 1
+
+    for node in nodes_copy.keys():          # finding not leaf nodes
+        if node not in leaves_nodes:
+            not_leaves_nodes.append(node)
+
+    while len(not_leaves_nodes) > 0:
+        not_visited = list()
+        for node in not_leaves_nodes:
+            children = nodes_copy[node].get_postconditions() + nodes_copy[node].get_description()
+            sum_value = 0
+            for child in children:
+                if child not in top_resources:
+                    not_visited.append(node)
+                    break
+                else:       # calculating the value for all children
+                    sum_value = sum_value + top_resources[child]
+            else:
+                top_resources[node] = sum_value + 1     # sum of children + itself
+        not_leaves_nodes = not_visited
+
+    return top_resources
+
+
+

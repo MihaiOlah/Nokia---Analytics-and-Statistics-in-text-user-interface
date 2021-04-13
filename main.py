@@ -13,6 +13,8 @@ def parse_args():
     parser.add_argument('-f', '--fileName', type=str, required=True, help='Path of the file')
     parser.add_argument('-rpp', '--reversePrecondPostcond', action='store_true', default=False, help='Reverse precondition-postcondition arrow direction')
     parser.add_argument('-rtd', '--reverseTrigDesc', action='store_true', default=False, help='Reverse trigger-description arrow direction')
+    parser.add_argument('-t', '--top', type=int, metavar='', default=-1,
+                        help='Top scenarios which consume the most resources')
     args = parser.parse_args()
 
     return args
@@ -154,10 +156,30 @@ def print_stat_13_formatted(results, run_on_scenario):
 
     print("Results found: {}".format(str(cont)))
 
-def check_options(options, nodes, run_on_scenario, pre_post, trig_desc):
+def print_stat_14_formatted(results, run_on_scenario, top):
+    print('TOP MOST CONSUMING SCENARIOS')
+    cont = 0
+    """
+    if run_on_scenario == 'all':
+        for i in results:
+            print(str(i)[1:-1])
+            cont = cont + 1
+    else:
+        for path in results:
+            path_upper = [x.upper() for x in path]
+            for scenario in run_on_scenario:
+                if scenario.upper() in path_upper:
+                    print("Scenario {} is found in cycle: {}".format(scenario, str(path)[1:-1]))
+                    cont = cont + 1
+
+    print("Results found: {}".format(str(cont)))
+    """
+
+
+def check_options(options, nodes, run_on_scenario, pre_post, trig_desc, top):
     if options == -1:
         # SA SCHIMBI LA CATE OPTIUNI AI MAXIM + 1
-        options = set(range(0, 14))         # if there is no requirements regarding the options, the program will display all of them
+        options = set(range(0, 15))         # if there is no requirements regarding the options, the program will display all of them
     else:
         options = set(options)
 
@@ -173,6 +195,7 @@ def check_options(options, nodes, run_on_scenario, pre_post, trig_desc):
     rez_stat_09 = stat_09(nodes)
     rez_stat_10 = stat_10(nodes, rez_stat_00, pre_post, trig_desc)
     rez_stat_12 = stat_12(nodes, rez_stat_00, pre_post, trig_desc)
+    rez_stat_14 = stat_14(nodes, pre_post, trig_desc)
 
     for i in options:
         if i == 0:
@@ -208,6 +231,8 @@ def check_options(options, nodes, run_on_scenario, pre_post, trig_desc):
             print_stat_12_formatted(rez_stat_12)
         elif i == 13:
             print_stat_13_formatted(rez_stat_12, run_on_scenario)
+        elif i == 14:
+            print_stat_14_formatted(rez_stat_14, run_on_scenario, top)
         else:
             print('Option does not exist')
 
@@ -221,7 +246,7 @@ def main():
         args.checkStatistic = list(set(args.checkStatistic))
 
     nodes = read_data(args.fileName, args.ignore)
-    check_options(args.checkStatistic, nodes, args.runOnScenario, args.reversePrecondPostcond, args.reverseTrigDesc)
+    check_options(args.checkStatistic, nodes, args.runOnScenario, args.reversePrecondPostcond, args.reverseTrigDesc, args.top)
 
 if __name__ == '__main__':
     main()
