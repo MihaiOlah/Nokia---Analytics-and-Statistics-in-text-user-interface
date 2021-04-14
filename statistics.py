@@ -212,6 +212,27 @@ def stat_10(nodes, root_nodes, pre_post, trig_desc):
 
     return paths
 
+# checking if the current cycle already exists in "cycles" by checking if it's a rotated form of another
+def cycle_is_rotated(cycle):
+    global cycles
+
+    same = False
+    for tmp_cycle in cycles:
+        if len(tmp_cycle) == len(cycle) and tmp_cycle[0] in cycle:
+            j = cycle.index(tmp_cycle[0])  # index in cycle to be added
+            for i in range(len(tmp_cycle) - 1):      # not counting the last element which is equal with the first; i index in tem_cycle
+                if tmp_cycle[i] != cycle[j]:
+                    break
+                j = j + 1
+            else:
+                same = True
+        if same:
+            break
+
+    if not same:
+        cycles.append(cycle)
+
+
 # in depth graph traversal and backtracking for finding all paths
 # the paths are added to the global variable "paths"
 # each time a longer path is found, the content of "paths" is deleted and the new longest path is added
@@ -248,6 +269,15 @@ def scenario_traversal_cycle(nodes, root, pre_post, trig_desc, cycle = []):
             cycle.pop()
 
     else:
+        #print(cycle.index(root))
+        #cycle.append(root)
+        tmp = cycle[cycle.index(root):]     # isolating the cycle from the entire path
+        tmp.append(root)                    # adding the last node to close the cycle
+        cycle_is_rotated(tmp)
+        #cycles.append(tmp)
+        #print(cycle)
+        #cycle.pop()
+        """"
         if root == cycle[0]:
             cycle.append(root)
 
@@ -261,7 +291,11 @@ def scenario_traversal_cycle(nodes, root, pre_post, trig_desc, cycle = []):
             cycles.append(list(cycle))
             cycle.pop()
         else:
+            cycle.append(root)
+            print(cycle)
+            cycle.pop()
             return cycle
+        """
     return cycle
 
 def remove_cycles(nodes, cycles):
@@ -284,7 +318,7 @@ def stat_12(nodes, root_nodes, pre_post, trig_desc):
 
     for root in root_nodes:
         scenario_traversal_cycle(nodes, root, pre_post, trig_desc)
-
+    print(cycles)
     return cycles
 
 # if a scenario is leaf, it costs 1 to be executed
@@ -319,6 +353,7 @@ def stat_14(nodes, pre_post, trig_desc):
             else:
                 top_resources[node] = sum_value + 1     # sum of children + itself
         not_leaves_nodes = not_visited
+        print(not_leaves_nodes)
 
     return top_resources
 
