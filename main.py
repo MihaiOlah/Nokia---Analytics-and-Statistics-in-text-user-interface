@@ -157,7 +157,6 @@ def print_stat_13_formatted(results, run_on_scenario):
     print("Results found: {}".format(str(cont)))
 
 def print_stat_14_formatted(results, top):
-    print('TOP {} MOST CONSUMING SCENARIOS'.format(top))
     cont = 0
 
     top_values = list(set(results.values()))      # set containing the unique values
@@ -170,8 +169,10 @@ def print_stat_14_formatted(results, top):
 
     j = 0
     result_len = len(result_tuples)
-    if top > len(top_values):
+    if top > len(top_values) or top == -1:
         top = len(top_values)
+    print('TOP {} MOST CONSUMING SCENARIOS'.format(top))
+
     for i in range(top):
         while j < result_len and result_tuples[j][1] == top_values[i]:
             print('{}: {}'.format(result_tuples[j][0], result_tuples[j][1]))
@@ -192,13 +193,16 @@ def check_options(options, nodes, run_on_scenario, pre_post, trig_desc, top):
 
     # statistics from 5 to 9 and 0 are mandatory for data cleaning, so we save the result and print it if necessary
     rez_stat_00 = stat_00(nodes)
+
+    rez_stat_01 = stat_01(nodes)
+
     rez_stat_05 = stat_05(nodes)
     rez_stat_06 = stat_06(nodes)
     rez_stat_07 = stat_07(nodes)
     rez_stat_08 = stat_08(nodes)
     rez_stat_09 = stat_09(nodes)
     rez_stat_10 = stat_10(nodes, rez_stat_00, pre_post, trig_desc)
-    rez_stat_12 = stat_12(nodes, rez_stat_00, pre_post, trig_desc)
+    rez_stat_12 = stat_12(nodes, set(rez_stat_00).intersection(rez_stat_01), pre_post, trig_desc)
     rez_stat_14 = stat_14(nodes, pre_post, trig_desc)
 
     for i in options:
