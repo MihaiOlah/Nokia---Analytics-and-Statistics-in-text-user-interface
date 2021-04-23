@@ -110,7 +110,7 @@ def print_stat_10_formatted(results):
     for i in results:
         print(str(i)[1:-1])
 
-    print("Results found: {}".format(len(results)))
+    print("Results found: {}\n".format(len(results)))
 
 def print_stat_11_formatted(results, run_on_scenario):
     print('LONGEST PATHS CONTAINING CERTAIN SCENARIOS')
@@ -128,7 +128,7 @@ def print_stat_11_formatted(results, run_on_scenario):
                     print("Scenario {} is found in path: {}".format(scenario, str(path)[1:-1]))
                     cont = cont + 1
 
-    print("Results found: {}".format(str(cont)))
+    print("Results found: {}\n".format(str(cont)))
 
 def print_stat_12_formatted(results):
     print('CYCLES')
@@ -136,7 +136,7 @@ def print_stat_12_formatted(results):
     for i in results:
         print(str(i)[1:-1])
 
-    print("Cycles found: {}".format(len(results)))
+    print("Cycles found: {}\n".format(len(results)))
 
 def print_stat_13_formatted(results, run_on_scenario):
     print('CYCLES CONTAINING CERTAIN SCENARIOS')
@@ -154,7 +154,7 @@ def print_stat_13_formatted(results, run_on_scenario):
                     print("Scenario {} is found in cycle: {}".format(scenario, str(path)[1:-1]))
                     cont = cont + 1
 
-    print("Results found: {}".format(str(cont)))
+    print("Results found: {}\n".format(str(cont)))
 
 def print_stat_14_formatted(results, top):
     cont = 0
@@ -165,7 +165,7 @@ def print_stat_14_formatted(results, top):
     result_tuples = list()
     for item in results.items():
         result_tuples.append((item[0], item[1]))
-    result_tuples.sort(reverse=True, key=lambda t: t[1])
+    result_tuples.sort(reverse=True, key=lambda t: t[1])    # sorting touple list descending, by value
 
     j = 0
     result_len = len(result_tuples)
@@ -184,6 +184,7 @@ def print_stat_14_formatted(results, top):
 def check_options(options, nodes, run_on_scenario, pre_post, trig_desc, top):
     if options == -1:
         # SA SCHIMBI LA CATE OPTIUNI AI MAXIM + 1
+        # IF YOU ADD MORE STATISTICS< YOU MUST INCREASE THE LIMIT BY HOW MANY STATISTICS YOU ADDED
         options = set(range(0, 15))         # if there is no requirements regarding the options, the program will display all of them
     else:
         options = set(options)
@@ -201,8 +202,15 @@ def check_options(options, nodes, run_on_scenario, pre_post, trig_desc, top):
     rez_stat_07 = stat_07(nodes)
     rez_stat_08 = stat_08(nodes)
     rez_stat_09 = stat_09(nodes)
-    rez_stat_10 = stat_10(nodes, rez_stat_00, pre_post, trig_desc)
-    rez_stat_12 = stat_12(nodes, set(rez_stat_00).intersection(rez_stat_01), pre_post, trig_desc)
+
+    #print(nodes['J65'])
+    #print(nodes['J64'])
+    #print(nodes['J67'])
+
+    default_roots = set(rez_stat_00).intersection(rez_stat_01)
+    rez_stat_10 = stat_10(nodes, default_roots, pre_post, trig_desc)
+    #rez_stat_12 = stat_12(nodes, set(rez_stat_00).intersection(rez_stat_01), pre_post, trig_desc)
+    rez_stat_12 = stat_12(nodes, default_roots, pre_post, trig_desc)
     rez_stat_14 = stat_14(nodes, pre_post, trig_desc)
 
     for i in options:
@@ -254,6 +262,7 @@ def main():
         args.checkStatistic = list(set(args.checkStatistic))
 
     nodes = read_data(args.fileName, args.ignore)
+    # problema e la nodirle de intrare, trebuie sa lueam nodurile nevizitate dupa trecerea pe nodurile default (facem un dictionar de vizitate)
     check_options(args.checkStatistic, nodes, args.runOnScenario, args.reversePrecondPostcond, args.reverseTrigDesc, args.top)
 
 if __name__ == '__main__':

@@ -1,6 +1,7 @@
 paths = list()
 cycles = list()
-top_resources = dict()
+top_resources = dict()      # key: scenario - value: cost
+not_visited_nodes = set()   # if a scenario is in this set, it means it wasn't visited
 
 def stat_00(nodes):
     withoutPreconditions = list()           # list containing the nodes without precondition
@@ -164,10 +165,14 @@ def stat_09(nodes):
 # if there are multiple path, then they are added among the rest of the longest paths
 def scenario_traversal(nodes, root, pre_post, trig_desc, path = []):
     global paths
+    global not_visited_nodes
 
     if root not in path:
 
         path.append(root)
+
+        if root in not_visited_nodes:
+            not_visited_nodes.remove(root)
 
         if not pre_post and not trig_desc:      # default directions
             neighbours = nodes[root].get_postconditions() + nodes[root].get_description()
@@ -204,11 +209,22 @@ def scenario_traversal(nodes, root, pre_post, trig_desc, path = []):
 
     return path
 
+# initially we find the cycles for the default roots (scenarios with no postconditions and no description)
+# after the first pass, there might be unvisited nodes, so we will go through the graph for each unvisited node
+# a node is marked as unvisited if it is found in "not_visited_variable"
+# initially, all nodes are marked as unvisited and they will be removed during the graph traversal
 def stat_10(nodes, root_nodes, pre_post, trig_desc):
     global paths
+    global not_visited_nodes
+    not_visited_nodes = set(nodes.keys())       # initially all nodes are not visited
 
+    # first pass using the default nodes
     for root in root_nodes:
         scenario_traversal(nodes, root, pre_post, trig_desc)
+
+    # second pass using the unvisited nodes
+    #while len(not_visited_nodes) > 0:
+     #   scenario_traversal_cycle(nodes, not_visited_nodes.pop(), pre_post, trig_desc)
 
     return paths
 
@@ -238,12 +254,16 @@ def cycle_is_rotated(cycle):
 # the paths are added to the global variable "paths"
 # each time a longer path is found, the content of "paths" is deleted and the new longest path is added
 # if there are multiple path, then they are added among the rest of the longest paths
-def scenario_traversal_cycle(nodes, root, pre_post, trig_desc, cycle = []):
+def scenario_traversal_cycle(nodes, root, pre_post, trig_desc, cycle=[]):
     global cycles
+    global not_visited_nodes
 
     if root not in cycle:
 
         cycle.append(root)
+
+        if root in not_visited_nodes:
+            not_visited_nodes.remove(root)
 
         if not pre_post and not trig_desc:      # default directions
             neighbours = nodes[root].get_postconditions() + nodes[root].get_description()
@@ -266,15 +286,19 @@ def scenario_traversal_cycle(nodes, root, pre_post, trig_desc, cycle = []):
            # else:
             #cycles.append(list(cycle))
 
-            #if len(cycle) > 0 and root in cycle:
-            cycle.pop()
+            if len(cycle) > 0 and root in cycle:        # asta dupa teste vedem daca ramane
+            #print('nu')
+                cycle.pop()
 
     else:
         #print(cycle.index(root))
         #cycle.append(root)
+        #print('da')
         tmp = cycle[cycle.index(root):]     # isolating the cycle from the entire path
         tmp.append(root)                    # adding the last node to close the cycle
         cycle_is_rotated(tmp)
+
+
         #cycles.append(tmp)
         #print(cycle)
         #cycle.pop()
@@ -314,12 +338,25 @@ def remove_cycles(nodes, cycles):
 
     return nodes
 
+# initially we find the cycles for the default roots (scenarios with no postconditions and no description)
+# after the first pass, there might be unvisited nodes, so we will go through the graph for each unvisited node
+# a node is marked as unvisited if it is found in "not_visited_variable"
+# initially, all nodes are marked as unvisited and they will be removed during the graph traversal
 def stat_12(nodes, root_nodes, pre_post, trig_desc):
     global cycles
+    global not_visited_nodes
+    not_visited_nodes = set(nodes.keys())       # initially all nodes are not visited
 
+    # first pass using the default roots
     for root in root_nodes:
         scenario_traversal_cycle(nodes, root, pre_post, trig_desc)
     #print(cycles)
+
+    # second pass using the unvisited nodes
+    while len(not_visited_nodes) > 0:
+        scenario_traversal_cycle(nodes, not_visited_nodes.pop(), pre_post, trig_desc)
+    #print(not_visited_nodes)
+
     return cycles
 
 # if a scenario is leaf, it costs 1 to be executed
@@ -328,19 +365,20 @@ def stat_14(nodes, pre_post, trig_desc):
     global top_resources
     global cycles
 
-    nodes_copy = dict(nodes)
-    nodes_copy = remove_cycles(nodes_copy, cycles)
+    nodes_copy = dict(nodes)                            # we don't want to alter the original, in case we need it for further statistics
+    nodes_copy = remove_cycles(nodes_copy, cycles)      # removing cycles from dictionary (cycles = infinity)
 
-    not_leaves_nodes = list()
-    leaves_nodes = set(stat_02(nodes_copy)).intersection(stat_03(nodes_copy))   # set containing leaves scenarios
+    not_leaves_nodes = list()                           # not visited nodes
+    leaves_nodes = set(stat_02(nodes_copy)).intersection(stat_03(nodes_copy))   # set containing leaves scenarios and visited
     for leaf in leaves_nodes:       # each leaf consts 1, because it's only the value of itself
         top_resources[leaf] = 1
 
     for node in nodes_copy.keys():          # finding not leaf nodes
         if node not in leaves_nodes:
             not_leaves_nodes.append(node)
+
     if len(leaves_nodes) > 0:
-        while len(not_leaves_nodes) > 0:
+        while len(not_leaves_nodes) > 0:            # while there are unvisited nodes
             not_visited = list()
             for node in not_leaves_nodes:
                 children = nodes_copy[node].get_postconditions() + nodes_copy[node].get_description()
@@ -353,8 +391,8 @@ def stat_14(nodes, pre_post, trig_desc):
                         sum_value = sum_value + top_resources[child]
                 else:
                     top_resources[node] = sum_value + 1     # sum of children + itself
-            not_leaves_nodes = not_visited
-            print(not_leaves_nodes)
+            not_leaves_nodes = not_visited          # updating unvisited nodes
+            #print(not_leaves_nodes)
 
     return top_resources
 
