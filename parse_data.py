@@ -1,6 +1,7 @@
 import xml.etree.ElementTree as ET
 from Node import *
 
+
 #if a node appears more than once, the keep only the first occurrence
 def parse_xml(path):
     tree = ET.parse(path)
@@ -31,6 +32,7 @@ def parse_xml(path):
     #for i in nodes.values():
         #print('{}\n'.format(i))
     return nodes, duplicates
+
 
 #clearing nonexisting nodes are those nodes for which there is no instance in "nodes"
 def clear_non_existent_nodes(nodes):
@@ -82,13 +84,14 @@ def clear_non_existent_nodes(nodes):
 
     return nodes, nonExistentNodes
 
-#if the tags contained parent's node name, the name is deleted from the respective tags
+
+# if the tags contained parent's node name, the name is deleted from the respective tags
 def node_name_in_own_tags(nodes):
     flagged_nodes = set()
 
     for node in nodes.values():
         found = False
-        name = node.get_name()             #node name
+        name = node.get_name()             # node name
         if name in node.get_preconditions():
             node.remove_preconditions(name)
             found = True
@@ -104,7 +107,7 @@ def node_name_in_own_tags(nodes):
         if name in node.get_references():
             node.remove_references(name)
             found = True
-        if found:                          #if the tags contained parent's node name, we add it to the flagged nodes
+        if found:                          # if the tags contained parent's node name, we add it to the flagged nodes
             flagged_nodes.add(name)
 
     #for i in nodes:
@@ -112,14 +115,12 @@ def node_name_in_own_tags(nodes):
 
     return nodes, flagged_nodes
 
+
 def read_data(path, *argv):
-    #nodes, duplicates = parse_xml('C:\\Users\\Mihai\\Desktop\\Proiect\\date.xml')
+    # nodes, duplicates = parse_xml('C:\\Users\\Mihai\\Desktop\\Proiect\\date.xml')
     nodes, duplicates = parse_xml(path)
     nodes, nonExistentNodes = clear_non_existent_nodes(nodes)
     nodes, flagged_nodes = node_name_in_own_tags(nodes)
-
-    #for i in nodes.values():
-        #print('{}\n'.format(i))
 
     if argv[0] == False:                # check if ignore option (-i/--ignore) is enabled or not
         if bool(duplicates):            # check if dictionary is empty

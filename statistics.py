@@ -1,7 +1,13 @@
+import multiprocessing
+import pickle
+import os
+import tempfile
+
 paths = list()
 cycles = list()
 top_resources = dict()      # key: scenario - value: cost
 not_visited_nodes = set()   # if a scenario is in this set, it means it wasn't visited
+
 
 def stat_00(nodes):
     withoutPreconditions = list()           # list containing the nodes without precondition
@@ -12,6 +18,7 @@ def stat_00(nodes):
 
     return withoutPreconditions
 
+
 def stat_01(nodes):
     withoutTrigger = list()                     # list containing the nodes without triggers
 
@@ -20,6 +27,7 @@ def stat_01(nodes):
             withoutTrigger.append(i[0])
 
     return withoutTrigger
+
 
 def stat_02(nodes):
     withoutDescription = list()                 # list containing the nodes without description
@@ -30,6 +38,7 @@ def stat_02(nodes):
 
     return withoutDescription
 
+
 def stat_03(nodes):
     withoutPostconditions = list()              # list containing the nodes without postconditions
 
@@ -39,6 +48,7 @@ def stat_03(nodes):
 
     return withoutPostconditions
 
+
 def stat_04(nodes):
     withoutReferences = list()                  # list containing the nodes without references
 
@@ -47,6 +57,7 @@ def stat_04(nodes):
             withoutReferences.append(i[0])
 
     return withoutReferences
+
 
 def stat_05(nodes):
     link_pre_post = dict()                      # dictionary containing the node as key and a list with all broken links as value
@@ -65,6 +76,7 @@ def stat_05(nodes):
 
     return link_pre_post
 
+
 def stat_06(nodes):
     link_trig_desc = dict()                      # dictionary containing the node as key and a list with all broken links as value
 
@@ -81,6 +93,7 @@ def stat_06(nodes):
             node[1].set_triggers(new_triggers)
 
     return link_trig_desc
+
 
 def stat_07(nodes):
     link_desc_trig = dict()                      # dictionary containing the node as key and a list with all broken links as value
@@ -99,6 +112,7 @@ def stat_07(nodes):
 
     return link_desc_trig
 
+
 def stat_08(nodes):
     link_post_pre = dict()                      # dictionary containing the node as key and a list with all broken links as value
 
@@ -115,6 +129,7 @@ def stat_08(nodes):
             node[1].set_postconditions(new_postconditions)
 
     return link_post_pre
+
 
 def stat_09(nodes):
     invalid_references_self = dict()                # reference not appearing in node's fields
@@ -159,11 +174,24 @@ def stat_09(nodes):
 
     return invalid_references_self, invalid_references_to_others
 
+
+# checking if a path is already in all paths
+# if it doesn't exist, we add it
+def check_unique_path(path):
+    global paths
+
+    for i in paths:
+        if i == path:
+            break
+    else:
+        paths.append(path)
+
+
 # in depth graph traversal and backtracking for finding all paths
 # the paths are added to the global variable "paths"
 # each time a longer path is found, the content of "paths" is deleted and the new longest path is added
 # if there are multiple path, then they are added among the rest of the longest paths
-def scenario_traversal(nodes, root, pre_post, trig_desc, path = []):
+def scenario_traversal(nodes, root, pre_post, trig_desc, path=[]):
     global paths
     global not_visited_nodes
 
@@ -189,11 +217,14 @@ def scenario_traversal(nodes, root, pre_post, trig_desc, path = []):
             if len(paths) > 0:
                 if len(paths[0]) < len(path):
                     paths = list()
-                    paths.append(list(path))
+                    check_unique_path(list(path))
+                    #paths.append(list(path))
                 elif len(paths[0]) == len(path):
-                    paths.append(list(path))
+                    check_unique_path(list(path))
+                    #paths.append(list(path))
             else:
-                paths.append(list(path))
+                check_unique_path(list(path))
+                #paths.append(list(path))
 
             if len(path) > 0 and root in path:
                 path.pop()
@@ -201,13 +232,17 @@ def scenario_traversal(nodes, root, pre_post, trig_desc, path = []):
     if len(paths) > 0:
         if len(paths[0]) < len(path):
             paths = list()
-            paths.append(list(path))
+            check_unique_path(list(path))
+            #paths.append(list(path))
         elif len(paths[0]) == len(path):
-            paths.append(list(path))
+            check_unique_path(list(path))
+            #paths.append(list(path))
     else:
-        paths.append(list(path))
+        check_unique_path(list(path))
+        #paths.append(list(path))
 
     return path
+
 
 # initially we find the cycles for the default roots (scenarios with no postconditions and no description)
 # after the first pass, there might be unvisited nodes, so we will go through the graph for each unvisited node
@@ -216,6 +251,8 @@ def scenario_traversal(nodes, root, pre_post, trig_desc, path = []):
 def stat_10(nodes, root_nodes, pre_post, trig_desc):
     global paths
     global not_visited_nodes
+    global cycles
+
     not_visited_nodes = set(nodes.keys())       # initially all nodes are not visited
 
     # first pass using the default nodes
@@ -223,13 +260,25 @@ def stat_10(nodes, root_nodes, pre_post, trig_desc):
         scenario_traversal(nodes, root, pre_post, trig_desc)
 
     # second pass using the unvisited nodes
-    #while len(not_visited_nodes) > 0:
-     #   scenario_traversal_cycle(nodes, not_visited_nodes.pop(), pre_post, trig_desc)
+    while len(not_visited_nodes) > 0:
+        scenario_traversal(nodes, not_visited_nodes.pop(), pre_post, trig_desc)
+
+    # third pass to check if the longest path can be found inside the cycles
+    cycle_scenarios = set()
+    for cycle in cycles:
+        for i in cycle:
+            cycle_scenarios.add(i)
+
+    # each node from a cycle is considered as a starting point, because we don't know the shape of the cycle and therefore
+    # each node could create a different path from the others
+    while len(cycle_scenarios) > 0:
+        scenario_traversal(nodes, cycle_scenarios.pop(), pre_post, trig_desc)
 
     return paths
 
+
 # checking if the current cycle already exists in "cycles" by checking if it's a rotated form of another
-def cycle_is_rotated(cycle):
+def cycle_is_rotated(cycle, tmp_file):
     global cycles
 
     same = False
@@ -248,22 +297,24 @@ def cycle_is_rotated(cycle):
 
     if not same:
         cycles.append(cycle)
+        tmp_file.write(str(cycle))
+        tmp_file.flush()
+
+    # print(len(cycles))
+    # print(cycle)
 
 
 # in depth graph traversal and backtracking for finding all paths
 # the paths are added to the global variable "paths"
 # each time a longer path is found, the content of "paths" is deleted and the new longest path is added
 # if there are multiple path, then they are added among the rest of the longest paths
-def scenario_traversal_cycle(nodes, root, pre_post, trig_desc, cycle=[]):
-    global cycles
-    global not_visited_nodes
-
+def scenario_traversal_cycle(nodes, root, pre_post, trig_desc, not_visited_nodes_in_thread, cycle, tmp_file):
     if root not in cycle:
 
         cycle.append(root)
-
-        if root in not_visited_nodes:
-            not_visited_nodes.remove(root)
+        if not_visited_nodes_in_thread is not None:
+            if root in not_visited_nodes_in_thread:
+                not_visited_nodes_in_thread.remove(root)
 
         if not pre_post and not trig_desc:      # default directions
             neighbours = nodes[root].get_postconditions() + nodes[root].get_description()
@@ -275,53 +326,19 @@ def scenario_traversal_cycle(nodes, root, pre_post, trig_desc, cycle=[]):
             neighbours = nodes[root].get_preconditions() + nodes[root].get_triggers()
 
         for neighbour in neighbours:
-            cycle = scenario_traversal_cycle(nodes, neighbour, pre_post, trig_desc, cycle)
+            cycle = scenario_traversal_cycle(nodes, neighbour, pre_post, trig_desc, not_visited_nodes_in_thread, cycle, tmp_file)
         else:
-        #    if len(paths) > 0:
-         #       if len(paths[0]) < len(cycle):
-          #          paths = list()
-           #         paths.append(list(cycle))
-            #    elif len(paths[0]) == len(cycle):
-             #       paths.append(list(cycle))
-           # else:
-            #cycles.append(list(cycle))
-
-            if len(cycle) > 0 and root in cycle:        # asta dupa teste vedem daca ramane
-            #print('nu')
+            if len(cycle) > 0 and root in cycle:
                 cycle.pop()
 
     else:
-        #print(cycle.index(root))
-        #cycle.append(root)
-        #print('da')
         tmp = cycle[cycle.index(root):]     # isolating the cycle from the entire path
         tmp.append(root)                    # adding the last node to close the cycle
-        cycle_is_rotated(tmp)
+        if len(tmp) > 2:
+            cycle_is_rotated(tmp, tmp_file)
 
-
-        #cycles.append(tmp)
-        #print(cycle)
-        #cycle.pop()
-        """"
-        if root == cycle[0]:
-            cycle.append(root)
-
-            #if len(cycles) > 0:
-             #   if len(cycles[0]) < len(cycle):
-              #      cycles = list()
-               #     cycles.append(list(cycle))
-               # elif len(cycles[0]) == len(cycle):
-                #    cycles.append(list(cycle))
-            #else:
-            cycles.append(list(cycle))
-            cycle.pop()
-        else:
-            cycle.append(root)
-            print(cycle)
-            cycle.pop()
-            return cycle
-        """
     return cycle
+
 
 def remove_cycles(nodes, cycles):
     for cycle in cycles:
@@ -338,26 +355,100 @@ def remove_cycles(nodes, cycles):
 
     return nodes
 
+
 # initially we find the cycles for the default roots (scenarios with no postconditions and no description)
 # after the first pass, there might be unvisited nodes, so we will go through the graph for each unvisited node
 # a node is marked as unvisited if it is found in "not_visited_variable"
 # initially, all nodes are marked as unvisited and they will be removed during the graph traversal
-def stat_12(nodes, root_nodes, pre_post, trig_desc):
+# we create a temp file in which the thread will write the list
+# after the thread ends the parent will open the file and read the list and after that will delete the temp file
+# we pass only temp file's name, because the file descriptor can't be encoded properly and will cause an exception
+def thread_stat_12(nodes, root_nodes, pre_post, trig_desc, file_name, verbose, thread_no):
     global cycles
-    global not_visited_nodes
-    not_visited_nodes = set(nodes.keys())       # initially all nodes are not visited
+    verbose_counter = 0
+    not_visited_nodes_in_thread = list(set(nodes.keys()))       # initially all nodes are not visited
+    file = open(file_name, 'wb')
+    verbose_counter_maximum = len(root_nodes)
+
+    path  = "D:\PC tmp\lt" + "test_temp_" + str(thread_no)
+    tmp_file = open(path, 'w')
 
     # first pass using the default roots
     for root in root_nodes:
-        scenario_traversal_cycle(nodes, root, pre_post, trig_desc)
+        scenario_traversal_cycle(nodes, root, pre_post, trig_desc, not_visited_nodes_in_thread, list(), tmp_file)
+        if verbose:
+            verbose_counter = verbose_counter + 1
+            print("First pass; thread {}: {} of {}".format(thread_no, verbose_counter, verbose_counter_maximum))
     #print(cycles)
 
     # second pass using the unvisited nodes
-    while len(not_visited_nodes) > 0:
-        scenario_traversal_cycle(nodes, not_visited_nodes.pop(), pre_post, trig_desc)
-    #print(not_visited_nodes)
+    while len(not_visited_nodes_in_thread) > 0:
+        scenario_traversal_cycle(nodes, not_visited_nodes_in_thread.pop(), pre_post, trig_desc, not_visited_nodes_in_thread, list(), tmp_file)
+
+    pickle.dump(cycles, file)
+    file.close()
+
+
+# we split the entry point to threads, so the time for searching will be reduced
+# each thread will receive a number of entry points
+# we use pipes to send the data from the thread to the parent
+# the parent will communicate with the threads via files, because the parent will read only after the thread is finnished
+# the thread will drop the list of cycles in the file before ending it's execution
+# we use library pickle to write objects (lists) in the temp file
+# I chose this method because the pipe has a buffer limit, while the file does not
+def stat_12(nodes, root_nodes, pre_post, trig_desc, no_threads, verbose):
+    global cycles
+
+    threads = list()                                    # contains triplets of type (type, parent_conn, child_conn)
+    no_roots = int(len(root_nodes) / no_threads)        # the number of roots each thread will receive (except the last)
+    root_nodes = list(root_nodes)                       # set objects are not subscriptable, so we change to list in order to split it
+    rez = list()                                        # this list will collect the results from all the threads
+
+    # sending the same amount of roots for all threads except the last, because of the int conversion
+    # the number of total roots might not be multiple of number of threads given to this function
+    for i in range(no_threads - 1):
+        thread_tmp_file = tempfile.TemporaryFile(mode='wb+')        # creating a temp file for each thread to write the list of cycles found
+        thread_tmp_file_name = thread_tmp_file.name                 # saving only the path and name, because the file descriptior can't the transmitted properly as a parameter
+        thread_tmp_file.close()
+        root_nodes_per_thread = root_nodes[i * no_roots:(i + 1) * no_roots]
+        t = multiprocessing.Process(target=thread_stat_12, args=(nodes, root_nodes_per_thread, pre_post, trig_desc, thread_tmp_file_name, verbose, i + 1))
+        t.start()
+        threads.append((t, thread_tmp_file_name))   # saving the thread and the file name (we will reopen this file to read what the thread wrote there)
+
+    # the last thread will receive the last roots until the end of the root_nodes
+    thread_tmp_file = tempfile.TemporaryFile(mode='wb+')    # creating a temp file for each thread to write the list of cycles found
+    thread_tmp_file_name = thread_tmp_file.name             # saving the name of the file for later use
+    t = multiprocessing.Process(target=thread_stat_12, args=(nodes, root_nodes[(no_threads - 1) * no_roots:], pre_post, trig_desc, thread_tmp_file_name, verbose, no_threads))
+    thread_tmp_file.close()
+    t.start()
+    threads.append((t, thread_tmp_file_name))                # saving the thread and the file name (we will reopen this file to read what the thread wrote there)
+
+    # waiting for threads to finnish the search (their execution)
+    for i in threads:
+        i[0].join()
+
+    #print('GATA')
+
+    # reading the data from the temp files of the threads
+    # after saving the data, the file is deleted
+    # i[0] -> thread, i[1] -> thread_temp_file_name
+    for i in threads:
+        file = open(i[1], 'rb')
+        rez.append(pickle.load(file))
+        file.close()
+        os.remove(i[1])
+
+    #for i in rez:
+        #print(i)
+
+    # unifying the results and deleting the duplicates and rotated versions of a cycle
+    cycles = rez[0]
+    #for thread_list_index in range(1, no_threads):
+     #   for cycle in rez[thread_list_index]:
+      #      cycle_is_rotated(cycle)
 
     return cycles
+
 
 # if a scenario is leaf, it costs 1 to be executed
 # if a scenario is not leaf, it costs 1 (value of itself) + sum of the values of the children scenarios
@@ -370,7 +461,7 @@ def stat_14(nodes, pre_post, trig_desc):
 
     not_leaves_nodes = list()                           # not visited nodes
     leaves_nodes = set(stat_02(nodes_copy)).intersection(stat_03(nodes_copy))   # set containing leaves scenarios and visited
-    for leaf in leaves_nodes:       # each leaf consts 1, because it's only the value of itself
+    for leaf in leaves_nodes:                           # each leaf consts 1, because it's only the value of itself
         top_resources[leaf] = 1
 
     for node in nodes_copy.keys():          # finding not leaf nodes

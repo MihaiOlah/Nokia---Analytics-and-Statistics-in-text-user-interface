@@ -1,6 +1,9 @@
 import argparse
 from parse_data import read_data
 from statistics import *
+from heal_scenarios import *
+import multiprocessing
+
 
 # parsing of the line arguments
 def parse_args():
@@ -11,13 +14,22 @@ def parse_args():
                         help='ID of the statistic/statistics')
     parser.add_argument('-i', '--ignore', action='store_true', help='Does not display the reading errors')
     parser.add_argument('-f', '--fileName', type=str, required=True, help='Path of the file')
-    parser.add_argument('-rpp', '--reversePrecondPostcond', action='store_true', default=False, help='Reverse precondition-postcondition arrow direction')
-    parser.add_argument('-rtd', '--reverseTrigDesc', action='store_true', default=False, help='Reverse trigger-description arrow direction')
+    parser.add_argument('-rpp', '--reversePrecondPostcond', action='store_true', default=False,
+                        help='Reverse precondition-postcondition arrow direction')
+    parser.add_argument('-rtd', '--reverseTrigDesc', action='store_true', default=False,
+                        help='Reverse trigger-description arrow direction')
     parser.add_argument('-t', '--top', type=int, metavar='', default=-1,
                         help='Top scenarios which consume the most resources')
+    parser.add_argument('-hs', '--healScenarios', action='store_true', default=False,
+                        help='Show statistics of the healed scenarios')
+    parser.add_argument('-cpu', '--noCPU', type=int, metavar='', default=multiprocessing.cpu_count(),
+                        help='Number of CPU used for multithreading')
+    parser.add_argument('-v', '--verbose', action='store_true', default=False,
+                        help='Show log for the most time consuming statistics')
     args = parser.parse_args()
 
     return args
+
 
 def print_stat_0_4_formatted(result, run_on_scenario, case):             # formatted display for statistics 0-4
     cont = 0
@@ -40,6 +52,7 @@ def print_stat_0_4_formatted(result, run_on_scenario, case):             # forma
 
     print("Results found: {}".format(str(cont)))
     print()
+
 
 def print_stat_5_8_formatted(result, case, run_on_scenario):
     has_printed = False
@@ -66,6 +79,7 @@ def print_stat_5_8_formatted(result, case, run_on_scenario):
     print("Results found: {}".format(str(cont)))
     if has_printed:
         print()
+
 
 def print_stat_9_formatted(invalid_references_self, invalid_references_to_others, run_on_scenario):
     print('REFERENCES')
@@ -104,6 +118,7 @@ def print_stat_9_formatted(invalid_references_self, invalid_references_to_others
     if has_printed:
         print()
 
+
 def print_stat_10_formatted(results):
     print('LONGEST PATHS')
 
@@ -111,6 +126,7 @@ def print_stat_10_formatted(results):
         print(str(i)[1:-1])
 
     print("Results found: {}\n".format(len(results)))
+
 
 def print_stat_11_formatted(results, run_on_scenario):
     print('LONGEST PATHS CONTAINING CERTAIN SCENARIOS')
@@ -130,6 +146,7 @@ def print_stat_11_formatted(results, run_on_scenario):
 
     print("Results found: {}\n".format(str(cont)))
 
+
 def print_stat_12_formatted(results):
     print('CYCLES')
 
@@ -137,6 +154,7 @@ def print_stat_12_formatted(results):
         print(str(i)[1:-1])
 
     print("Cycles found: {}\n".format(len(results)))
+
 
 def print_stat_13_formatted(results, run_on_scenario):
     print('CYCLES CONTAINING CERTAIN SCENARIOS')
@@ -156,6 +174,7 @@ def print_stat_13_formatted(results, run_on_scenario):
 
     print("Results found: {}\n".format(str(cont)))
 
+
 def print_stat_14_formatted(results, top):
     cont = 0
 
@@ -169,7 +188,7 @@ def print_stat_14_formatted(results, top):
 
     j = 0
     result_len = len(result_tuples)
-    if top > len(top_values) or top == -1:
+    if top > len(top_values) or top < 1:
         top = len(top_values)
     print('TOP {} MOST CONSUMING SCENARIOS'.format(top))
 
@@ -181,10 +200,11 @@ def print_stat_14_formatted(results, top):
 
     print('Result printed {}'.format(cont))
 
-def check_options(options, nodes, run_on_scenario, pre_post, trig_desc, top):
+
+def check_options(options, nodes, run_on_scenario, pre_post, trig_desc, top, noCPU, heal, verbose):
     if options == -1:
         # SA SCHIMBI LA CATE OPTIUNI AI MAXIM + 1
-        # IF YOU ADD MORE STATISTICS< YOU MUST INCREASE THE LIMIT BY HOW MANY STATISTICS YOU ADDED
+        # IF YOU ADD MORE STATISTICS, YOU MUST INCREASE THE LIMIT BY HOW MANY STATISTICS YOU ADDED
         options = set(range(0, 15))         # if there is no requirements regarding the options, the program will display all of them
     else:
         options = set(options)
@@ -192,10 +212,19 @@ def check_options(options, nodes, run_on_scenario, pre_post, trig_desc, top):
     if run_on_scenario != 'all':
         run_on_scenario = set(run_on_scenario)
 
+    if noCPU < 1 or noCPU > multiprocessing.cpu_count():
+        noCPU = multiprocessing.cpu_count()
+
     # statistics from 5 to 9 and 0 are mandatory for data cleaning, so we save the result and print it if necessary
     rez_stat_00 = stat_00(nodes)
 
     rez_stat_01 = stat_01(nodes)
+
+    if heal:
+        nodes = stat_05_heal(nodes)
+        nodes = stat_06_heal(nodes)
+        nodes = stat_07_heal(nodes)
+        nodes = stat_08_heal(nodes)
 
     rez_stat_05 = stat_05(nodes)
     rez_stat_06 = stat_06(nodes)
@@ -208,9 +237,9 @@ def check_options(options, nodes, run_on_scenario, pre_post, trig_desc, top):
     #print(nodes['J67'])
 
     default_roots = set(rez_stat_00).intersection(rez_stat_01)
+    rez_stat_12 = stat_12(nodes, default_roots, pre_post, trig_desc, noCPU, verbose)        # we run stat 12 first, because we need to know the cycles for stat 10
     rez_stat_10 = stat_10(nodes, default_roots, pre_post, trig_desc)
     #rez_stat_12 = stat_12(nodes, set(rez_stat_00).intersection(rez_stat_01), pre_post, trig_desc)
-    rez_stat_12 = stat_12(nodes, default_roots, pre_post, trig_desc)
     rez_stat_14 = stat_14(nodes, pre_post, trig_desc)
 
     for i in options:
@@ -252,6 +281,7 @@ def check_options(options, nodes, run_on_scenario, pre_post, trig_desc, top):
         else:
             print('Option does not exist')
 
+
 def main():
     args = parse_args()
     if args.runOnScenario != 'all':                                 # all scenarios will be transformed to upper case, because names are case insensitive
@@ -262,12 +292,13 @@ def main():
         args.checkStatistic = list(set(args.checkStatistic))
 
     nodes = read_data(args.fileName, args.ignore)
-    # problema e la nodirle de intrare, trebuie sa lueam nodurile nevizitate dupa trecerea pe nodurile default (facem un dictionar de vizitate)
-    check_options(args.checkStatistic, nodes, args.runOnScenario, args.reversePrecondPostcond, args.reverseTrigDesc, args.top)
+    check_options(args.checkStatistic, nodes, args.runOnScenario, args.reversePrecondPostcond, args.reverseTrigDesc,
+                  args.top, args.noCPU, args.healScenarios, args.verbose)
 
 if __name__ == '__main__':
     main()
 
+# de pus descrieri
 
 
 

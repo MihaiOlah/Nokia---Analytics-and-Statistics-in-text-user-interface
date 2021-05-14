@@ -62,3 +62,15 @@ class Node:
 
     def set_references(self, references):
         self.references = list(references)
+
+    def add_precondition(self, precondition):
+        self.preconditions.append(precondition)
+
+    def add_trigger(self, trigger):
+        self.triggers.append(trigger)
+
+    def add_description(self, description):
+        self.description.append(description)
+
+    def add_postcondition(self, postcondition):
+        self.postconditions.append(postcondition)
