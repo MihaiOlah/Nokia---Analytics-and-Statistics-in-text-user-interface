@@ -370,7 +370,8 @@ def thread_stat_12(nodes, root_nodes, pre_post, trig_desc, file_name, verbose, t
     file = open(file_name, 'wb')
     verbose_counter_maximum = len(root_nodes)
 
-    path  = "D:\PC tmp\lt" + "test_temp_" + str(thread_no)
+    #path  = "D:\PC tmp\lt" + "test_temp_" + str(thread_no)
+    path = os.getcwd() + "\\" + "test_temp_" + str(thread_no)
     tmp_file = open(path, 'w')
 
     # first pass using the default roots
