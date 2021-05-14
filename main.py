@@ -3,11 +3,29 @@ from parse_data import read_data
 from statistics import *
 from heal_scenarios import *
 import multiprocessing
-
+'\nID =  | Name =  | Description = '
 
 # parsing of the line arguments
 def parse_args():
-    parser = argparse.ArgumentParser(description='Analystics and statistics options and XML file\'s path')
+    parser = argparse.ArgumentParser(description='Analystics and statistics options and XML file\'s path'
+            '\nID = 00 | Name = Pre-condition not empty | Description = Scenario(s) without other scenario(s) in the pre-conditions '
+            '\nID = 01 | Name = Triggers not empty | Description = Scenario(s) without other scenario(s) in the triggers.'
+            '\nID = 02 | Name = Description not empty | Description = Scenario(s) without other scenario(s) in the description.'
+            '\nID = 03 | Name = Post-condition not empty | Description = Scenario(s) without other scenario(s) in the post-conditions.'
+            '\nID = 04 | Name = References not empty | Description = Scenario(s) without other scenario(s) in the references.'
+            '\nID = 05 | Name = Link Pre-Condition to Post-Condition | Description = If S1 has S2 in Pre-conditions then S2 should have S1 in Post-conditions. S2->S1.'
+            '\nID = 06 | Name = Link Trigger to Description | Description = If S1 has S2 in Triggers S2 then S2 should have S1 in Description. S2->S1.'
+            '\nID = 07 | Name = Link Description to Trigger | Description = If S1 has S2 in Description then S2 should have S1 in Triggers. S1->S2.'
+            '\nID = 08 | Name = Link Post-Condition to Pre-Condition | Description = If S1 has S2 in Post-conditions then S2 should have S1 in Pre-conditions. S1->S2.'
+            '\nID = 09 | Name = Link References | Description = If S1 has S2 in References then:'
+                                                 '\n\t\t\t- S1 should also have S2 mentioned in Pre-Conditions | Triggers | Description | Post-conditions.'
+                                                 '\n\t\t\t- S2 should have S1 mentioned in Pre-Conditions | Triggers | Description | Post-conditions.'
+            '\nID = 10 | Name = Longest path | Description = Find the longest path, like in the case of the graph.'
+            '\nID = 11 | Name = Longest path containsscenario | Description = Find the longest path containing a specific scenario , like in the case of the graph.'
+            '\nID = 12 | Name = Circular paths contains scenario | Description = Find all circular paths (the story never finish) , like in the case of the graph.'
+            '\nID = 13 | Name = Circular paths contains scenario | Description = Find all circular paths (the story never finish) containing a specific scenario , like in the case of the graph.'
+            '\nID = 14 | Name = The top of the most constly nodes | Description = Shows all the nodes that were called starting with the current node'
+            ,formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('-r', '--runOnScenario', type=str, metavar='', default='all', nargs='+',
                         help='Name of the scenario/scenarios the script will run the statistics and analytics on')
     parser.add_argument('-c', '--checkStatistic', type=int, metavar='', default=-1, nargs='+',
@@ -26,6 +44,7 @@ def parse_args():
                         help='Number of CPU used for multithreading')
     parser.add_argument('-v', '--verbose', action='store_true', default=False,
                         help='Show log for the most time consuming statistics')
+
     args = parser.parse_args()
 
     return args
@@ -69,7 +88,7 @@ def print_stat_5_8_formatted(result, case, run_on_scenario):
         result_upper_keys = [x.upper() for x in result.keys()]
         run_on_scenario = list(run_on_scenario)
         for j in run_on_scenario:
-           # j = j.upper()
+            # j = j.upper()
             if j.upper() in result_upper_keys:
                 for k in result[j]:
                     print('Broken {} from {} to {}'.format(case, k, j))
