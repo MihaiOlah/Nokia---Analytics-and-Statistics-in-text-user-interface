@@ -25,6 +25,7 @@ def parse_args():
             '\nID = 12 | Name = Circular paths contains scenario | Description = Find all circular paths (the story never finish) , like in the case of the graph.'
             '\nID = 13 | Name = Circular paths contains scenario | Description = Find all circular paths (the story never finish) containing a specific scenario , like in the case of the graph.'
             '\nID = 14 | Name = The top of the most constly nodes | Description = Shows all the nodes that were called starting with the current node'
+            '\nID = 15 | Name = The top of the most constly nodes given from command line | Description = Shows all the nodes that were called starting with the current nodes that were given from command line'
             ,formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('-r', '--runOnScenario', type=str, metavar='', default='all', nargs='+',
                         help='Name of the scenario/scenarios the script will run the statistics and analytics on')
@@ -42,8 +43,8 @@ def parse_args():
                         help='Show statistics of the healed scenarios')
     parser.add_argument('-cpu', '--noCPU', type=int, metavar='', default=multiprocessing.cpu_count(),
                         help='Number of CPU used for multithreading')
-    parser.add_argument('-v', '--verbose', action='store_true', default=False,
-                        help='Show log for the most time consuming statistics')
+    #parser.add_argument('-v', '--verbose', action='store_true', default=False,
+                        #help='Show log for the most time consuming statistics')
 
     args = parser.parse_args()
 
@@ -70,7 +71,6 @@ def print_stat_0_4_formatted(result, run_on_scenario, case):             # forma
             print('Nodes without {} {}'.format(case, i))
             cont = cont + 1
     else:
-        intersection = list()
         result_upper = [x.upper() for x in result]
         for j in run_on_scenario:
             #j = j.upper()
@@ -85,7 +85,6 @@ def print_stat_0_4_formatted(result, run_on_scenario, case):             # forma
 
 
 def print_stat_5_8_formatted(result, case, run_on_scenario):
-    has_printed = False
     #print(case.upper())
     cont = 0
     if case=='precondition to postcondition link':
@@ -102,25 +101,22 @@ def print_stat_5_8_formatted(result, case, run_on_scenario):
             for j in i[1]:
                 print('Broken {} from {} to {}'.format(case, j, i[0]))
                 cont = cont + 1
-            has_printed = True
     else:
         result_upper_keys = [x.upper() for x in result.keys()]
         run_on_scenario = list(run_on_scenario)
         for j in run_on_scenario:
-            # j = j.upper()
             if j.upper() in result_upper_keys:
                 for k in result[j]:
                     print('Broken {} from {} to {}'.format(case, k, j))
                     cont = cont + 1
-                has_printed = True
 
     print("Results found: {}".format(str(cont)))
-    if has_printed:
-        print()
+    print()
 
 
 def print_stat_9_formatted(invalid_references_self, invalid_references_to_others, run_on_scenario):
-    print('id:09 | name:Link References | description:If S1 has S2 in References then: S1 should also have S2 mentioned in Pre-Conditions | Triggers | Description | Post-conditions and  S2 should have S1 mentioned in Pre-Conditions | Triggers | Description | Post-conditions')
+    print('id:09 | name:Link References | description:If S1 has S2 in References then: S1 should also have S2 mentioned '
+          'in Pre-Conditions | Triggers | Description | Post-conditions and  S2 should have S1 mentioned in Pre-Conditions | Triggers | Description | Post-conditions')
     has_printed = False
     cont = 0
 
@@ -240,7 +236,37 @@ def print_stat_14_formatted(results, top):
     print('Result printed {}'.format(cont))
 
 
-def check_options(options, nodes, run_on_scenario, pre_post, trig_desc, top, noCPU, heal, verbose):
+def print_stat_15_formatted(results, top, run_on_scenario):
+    print('id:15 | name: The top of the most constly nodes | description = Shows the most consuming nodes given by the user from command line')
+    cont = 0
+
+    top_values = list(set(results.values()))      # set containing the unique values
+    top_values.sort(reverse=True)
+
+    result_tuples = list()
+    for item in results.items():
+        result_tuples.append((item[0], item[1]))
+    result_tuples.sort(reverse=True, key=lambda t: t[1])    # sorting touple list descending, by value
+
+    if top > len(top_values) or top < 1:
+        top = len(top_values)
+    print('TOP {} MOST CONSUMING SCENARIOS GIVEN FROM COMMAND LINE'.format(top))
+
+    tmp = list()
+    for i in run_on_scenario:
+        tmp.append(i.upper())
+
+    run_on_scenario = tmp
+
+    for tuple in result_tuples:
+        if tuple[0].upper() in run_on_scenario:
+            print('{}: {}'.format(tuple[0], tuple[1]))
+            cont = cont + 1
+
+    print('Result printed {}'.format(cont))
+
+
+def check_options(options, nodes, run_on_scenario, pre_post, trig_desc, top, noCPU, heal):
     if options == -1:
         # SA SCHIMBI LA CATE OPTIUNI AI MAXIM + 1
         # IF YOU ADD MORE STATISTICS, YOU MUST INCREASE THE LIMIT BY HOW MANY STATISTICS YOU ADDED
@@ -250,13 +276,14 @@ def check_options(options, nodes, run_on_scenario, pre_post, trig_desc, top, noC
 
     if run_on_scenario != 'all':
         run_on_scenario = set(run_on_scenario)
+    else:
+        run_on_scenario = set()
 
     if noCPU < 1 or noCPU > multiprocessing.cpu_count():
         noCPU = multiprocessing.cpu_count()
 
     # statistics from 5 to 9 and 0 are mandatory for data cleaning, so we save the result and print it if necessary
     rez_stat_00 = stat_00(nodes)
-
     rez_stat_01 = stat_01(nodes)
 
     if heal:
@@ -276,10 +303,17 @@ def check_options(options, nodes, run_on_scenario, pre_post, trig_desc, top, noC
     #print(nodes['J67'])
 
     default_roots = set(rez_stat_00).intersection(rez_stat_01)
-    rez_stat_12 = stat_12(nodes, default_roots, pre_post, trig_desc, noCPU, verbose)        # we run stat 12 first, because we need to know the cycles for stat 10
-    rez_stat_10 = stat_10(nodes, default_roots, pre_post, trig_desc)
-    #rez_stat_12 = stat_12(nodes, set(rez_stat_00).intersection(rez_stat_01), pre_post, trig_desc)
-    rez_stat_14 = stat_14(nodes, pre_post, trig_desc)
+
+    # the se are most time consuming statistics, if the user doesn't ask for them, we don't need to compute them
+    if 10 in options or 11 in options or 12 in options or 13 in options or 14 in options or 15 in options:
+        rez_stat_12 = stat_12(nodes, default_roots, pre_post, trig_desc, noCPU)        # we run stat 12 first, because we need to know the cycles for stat 10
+        rez_stat_10 = stat_10(nodes, default_roots, pre_post, trig_desc)
+        #rez_stat_12 = stat_12(nodes, set(rez_stat_00).intersection(rez_stat_01), pre_post, trig_desc)
+        rez_stat_14 = stat_14(nodes, pre_post, trig_desc)
+    else:
+        rez_stat_10 = set()
+        rez_stat_12 = set()
+        rez_stat_14 = set()
 
     for i in options:
         if i == 0:
@@ -309,15 +343,17 @@ def check_options(options, nodes, run_on_scenario, pre_post, trig_desc, top, noC
             print_stat_9_formatted(invalid_references_self, invalid_references_to_others, run_on_scenario)
         elif i == 10:
             print_stat_10_formatted(rez_stat_10)
-        elif i == 11:
+        elif i == 11 and len(run_on_scenario) != 0:
             print_stat_11_formatted(rez_stat_10, run_on_scenario)
         elif i == 12:
             print_stat_12_formatted(rez_stat_12)
-        elif i == 13:
+        elif i == 13 and len(run_on_scenario) != 0:
             print_stat_13_formatted(rez_stat_12, run_on_scenario)
         elif i == 14:
             print_stat_14_formatted(rez_stat_14, top)
-        else:
+        elif i == 15 and len(run_on_scenario) != 0:
+            print_stat_15_formatted(rez_stat_14, top, run_on_scenario)
+        elif i > 15:
             print('Option does not exist')
 
 
@@ -332,43 +368,7 @@ def main():
 
     nodes = read_data(args.fileName, args.ignore)
     check_options(args.checkStatistic, nodes, args.runOnScenario, args.reversePrecondPostcond, args.reverseTrigDesc,
-                  args.top, args.noCPU, args.healScenarios, args.verbose)
+                  args.top, args.noCPU, args.healScenarios)
 
 if __name__ == '__main__':
     main()
-
-# de pus descrieri
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

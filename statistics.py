@@ -191,7 +191,7 @@ def check_unique_path(path):
 # the paths are added to the global variable "paths"
 # each time a longer path is found, the content of "paths" is deleted and the new longest path is added
 # if there are multiple path, then they are added among the rest of the longest paths
-def scenario_traversal(nodes, root, pre_post, trig_desc, path=[]):
+def scenario_traversal(nodes, root, pre_post, trig_desc, path):
     global paths
     global not_visited_nodes
 
@@ -257,11 +257,11 @@ def stat_10(nodes, root_nodes, pre_post, trig_desc):
 
     # first pass using the default nodes
     for root in root_nodes:
-        scenario_traversal(nodes, root, pre_post, trig_desc)
+        scenario_traversal(nodes, root, pre_post, trig_desc, list())
 
     # second pass using the unvisited nodes
     while len(not_visited_nodes) > 0:
-        scenario_traversal(nodes, not_visited_nodes.pop(), pre_post, trig_desc)
+        scenario_traversal(nodes, not_visited_nodes.pop(), pre_post, trig_desc, list())
 
     # third pass to check if the longest path can be found inside the cycles
     cycle_scenarios = set()
@@ -272,13 +272,13 @@ def stat_10(nodes, root_nodes, pre_post, trig_desc):
     # each node from a cycle is considered as a starting point, because we don't know the shape of the cycle and therefore
     # each node could create a different path from the others
     while len(cycle_scenarios) > 0:
-        scenario_traversal(nodes, cycle_scenarios.pop(), pre_post, trig_desc)
+        scenario_traversal(nodes, cycle_scenarios.pop(), pre_post, trig_desc, list())
 
     return paths
 
 
 # checking if the current cycle already exists in "cycles" by checking if it's a rotated form of another
-def cycle_is_rotated(cycle, tmp_file):
+def cycle_is_rotated(cycle):
     global cycles
 
     same = False
@@ -297,8 +297,6 @@ def cycle_is_rotated(cycle, tmp_file):
 
     if not same:
         cycles.append(cycle)
-        tmp_file.write(str(cycle))
-        tmp_file.flush()
 
     # print(len(cycles))
     # print(cycle)
@@ -308,7 +306,7 @@ def cycle_is_rotated(cycle, tmp_file):
 # the paths are added to the global variable "paths"
 # each time a longer path is found, the content of "paths" is deleted and the new longest path is added
 # if there are multiple path, then they are added among the rest of the longest paths
-def scenario_traversal_cycle(nodes, root, pre_post, trig_desc, not_visited_nodes_in_thread, cycle, tmp_file):
+def scenario_traversal_cycle(nodes, root, pre_post, trig_desc, not_visited_nodes_in_thread, cycle):
     if root not in cycle:
 
         cycle.append(root)
@@ -326,7 +324,7 @@ def scenario_traversal_cycle(nodes, root, pre_post, trig_desc, not_visited_nodes
             neighbours = nodes[root].get_preconditions() + nodes[root].get_triggers()
 
         for neighbour in neighbours:
-            cycle = scenario_traversal_cycle(nodes, neighbour, pre_post, trig_desc, not_visited_nodes_in_thread, cycle, tmp_file)
+            cycle = scenario_traversal_cycle(nodes, neighbour, pre_post, trig_desc, not_visited_nodes_in_thread, cycle)
         else:
             if len(cycle) > 0 and root in cycle:
                 cycle.pop()
@@ -335,7 +333,7 @@ def scenario_traversal_cycle(nodes, root, pre_post, trig_desc, not_visited_nodes
         tmp = cycle[cycle.index(root):]     # isolating the cycle from the entire path
         tmp.append(root)                    # adding the last node to close the cycle
         if len(tmp) > 2:
-            cycle_is_rotated(tmp, tmp_file)
+            cycle_is_rotated(tmp)
 
     return cycle
 
@@ -363,7 +361,7 @@ def remove_cycles(nodes, cycles):
 # we create a temp file in which the thread will write the list
 # after the thread ends the parent will open the file and read the list and after that will delete the temp file
 # we pass only temp file's name, because the file descriptor can't be encoded properly and will cause an exception
-def thread_stat_12(nodes, root_nodes, pre_post, trig_desc, file_name, verbose, thread_no):
+def thread_stat_12(nodes, root_nodes, pre_post, trig_desc, file_name, thread_no):
     global cycles
     verbose_counter = 0
     not_visited_nodes_in_thread = list(set(nodes.keys()))       # initially all nodes are not visited
@@ -371,23 +369,24 @@ def thread_stat_12(nodes, root_nodes, pre_post, trig_desc, file_name, verbose, t
     verbose_counter_maximum = len(root_nodes)
 
     #path  = "D:\PC tmp\lt" + "test_temp_" + str(thread_no)
-    path = os.getcwd() + "\\" + "test_temp_" + str(thread_no)
-    tmp_file = open(path, 'w')
+    #path = os.getcwd() + "\\" + "test_temp_" + str(thread_no)
+    #tmp_file = open(path, 'w')
 
     # first pass using the default roots
     for root in root_nodes:
-        scenario_traversal_cycle(nodes, root, pre_post, trig_desc, not_visited_nodes_in_thread, list(), tmp_file)
-        if verbose:
-            verbose_counter = verbose_counter + 1
-            print("First pass; thread {}: {} of {}".format(thread_no, verbose_counter, verbose_counter_maximum))
+        scenario_traversal_cycle(nodes, root, pre_post, trig_desc, not_visited_nodes_in_thread, list())
+        #if verbose:
+            #verbose_counter = verbose_counter + 1
+           # print("First pass; thread {}: {} of {}".format(thread_no, verbose_counter, verbose_counter_maximum))
     #print(cycles)
 
     # second pass using the unvisited nodes
     while len(not_visited_nodes_in_thread) > 0:
-        scenario_traversal_cycle(nodes, not_visited_nodes_in_thread.pop(), pre_post, trig_desc, not_visited_nodes_in_thread, list(), tmp_file)
+        scenario_traversal_cycle(nodes, not_visited_nodes_in_thread.pop(), pre_post, trig_desc, not_visited_nodes_in_thread, list())
 
     pickle.dump(cycles, file)
     file.close()
+    #os.remove(tmp_file.name)
 
 
 # we split the entry point to threads, so the time for searching will be reduced
@@ -397,7 +396,7 @@ def thread_stat_12(nodes, root_nodes, pre_post, trig_desc, file_name, verbose, t
 # the thread will drop the list of cycles in the file before ending it's execution
 # we use library pickle to write objects (lists) in the temp file
 # I chose this method because the pipe has a buffer limit, while the file does not
-def stat_12(nodes, root_nodes, pre_post, trig_desc, no_threads, verbose):
+def stat_12(nodes, root_nodes, pre_post, trig_desc, no_threads):
     global cycles
 
     threads = list()                                    # contains triplets of type (type, parent_conn, child_conn)
@@ -412,14 +411,14 @@ def stat_12(nodes, root_nodes, pre_post, trig_desc, no_threads, verbose):
         thread_tmp_file_name = thread_tmp_file.name                 # saving only the path and name, because the file descriptior can't the transmitted properly as a parameter
         thread_tmp_file.close()
         root_nodes_per_thread = root_nodes[i * no_roots:(i + 1) * no_roots]
-        t = multiprocessing.Process(target=thread_stat_12, args=(nodes, root_nodes_per_thread, pre_post, trig_desc, thread_tmp_file_name, verbose, i + 1))
+        t = multiprocessing.Process(target=thread_stat_12, args=(nodes, root_nodes_per_thread, pre_post, trig_desc, thread_tmp_file_name, i + 1))
         t.start()
         threads.append((t, thread_tmp_file_name))   # saving the thread and the file name (we will reopen this file to read what the thread wrote there)
 
     # the last thread will receive the last roots until the end of the root_nodes
     thread_tmp_file = tempfile.TemporaryFile(mode='wb+')    # creating a temp file for each thread to write the list of cycles found
     thread_tmp_file_name = thread_tmp_file.name             # saving the name of the file for later use
-    t = multiprocessing.Process(target=thread_stat_12, args=(nodes, root_nodes[(no_threads - 1) * no_roots:], pre_post, trig_desc, thread_tmp_file_name, verbose, no_threads))
+    t = multiprocessing.Process(target=thread_stat_12, args=(nodes, root_nodes[(no_threads - 1) * no_roots:], pre_post, trig_desc, thread_tmp_file_name, no_threads))
     thread_tmp_file.close()
     t.start()
     threads.append((t, thread_tmp_file_name))                # saving the thread and the file name (we will reopen this file to read what the thread wrote there)
