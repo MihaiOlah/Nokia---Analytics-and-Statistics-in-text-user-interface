@@ -472,7 +472,14 @@ def stat_14(nodes, pre_post, trig_desc):
         while len(not_leaves_nodes) > 0:            # while there are unvisited nodes
             not_visited = list()
             for node in not_leaves_nodes:
-                children = nodes_copy[node].get_postconditions() + nodes_copy[node].get_description()
+                if not pre_post and not trig_desc:
+                    children = nodes_copy[node].get_postconditions() + nodes_copy[node].get_description()
+                elif pre_post and not trig_desc:
+                    children = nodes_copy[node].get_preconditions() + nodes_copy[node].get_description()
+                elif not pre_post and trig_desc:
+                    children = nodes_copy[node].get_postconditions() + nodes_copy[node].get_triggers()
+                else:
+                    children = nodes_copy[node].get_preconditions() + nodes_copy[node].get_triggers()
                 sum_value = 0
                 for child in children:
                     if child not in top_resources:
