@@ -14,7 +14,6 @@ def stat_05_heal(nodes):
 
 
 def stat_06_heal(nodes):
-    j = 0
     for node in nodes.items():                                                      # for each node in the main dictionary
         for trigger in node[1].get_triggers():                                      # we search for each precondition
             if node[0] not in nodes[trigger].get_description():                     # and we check if the current node apears in the description of the node represented by the triggers

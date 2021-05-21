@@ -218,13 +218,10 @@ def scenario_traversal(nodes, root, pre_post, trig_desc, path):
                 if len(paths[0]) < len(path):
                     paths = list()
                     check_unique_path(list(path))
-                    #paths.append(list(path))
                 elif len(paths[0]) == len(path):
                     check_unique_path(list(path))
-                    #paths.append(list(path))
             else:
                 check_unique_path(list(path))
-                #paths.append(list(path))
 
             if len(path) > 0 and root in path:
                 path.pop()
@@ -233,13 +230,10 @@ def scenario_traversal(nodes, root, pre_post, trig_desc, path):
         if len(paths[0]) < len(path):
             paths = list()
             check_unique_path(list(path))
-            #paths.append(list(path))
         elif len(paths[0]) == len(path):
             check_unique_path(list(path))
-            #paths.append(list(path))
     else:
         check_unique_path(list(path))
-        #paths.append(list(path))
 
     return path
 
@@ -297,9 +291,6 @@ def cycle_is_rotated(cycle):
 
     if not same:
         cycles.append(cycle)
-
-    # print(len(cycles))
-    # print(cycle)
 
 
 # in depth graph traversal and backtracking for finding all paths
@@ -363,22 +354,12 @@ def remove_cycles(nodes, cycles):
 # we pass only temp file's name, because the file descriptor can't be encoded properly and will cause an exception
 def thread_stat_12(nodes, root_nodes, pre_post, trig_desc, file_name, thread_no):
     global cycles
-    verbose_counter = 0
     not_visited_nodes_in_thread = list(set(nodes.keys()))       # initially all nodes are not visited
     file = open(file_name, 'wb')
-    verbose_counter_maximum = len(root_nodes)
-
-    #path  = "D:\PC tmp\lt" + "test_temp_" + str(thread_no)
-    #path = os.getcwd() + "\\" + "test_temp_" + str(thread_no)
-    #tmp_file = open(path, 'w')
 
     # first pass using the default roots
     for root in root_nodes:
         scenario_traversal_cycle(nodes, root, pre_post, trig_desc, not_visited_nodes_in_thread, list())
-        #if verbose:
-            #verbose_counter = verbose_counter + 1
-           # print("First pass; thread {}: {} of {}".format(thread_no, verbose_counter, verbose_counter_maximum))
-    #print(cycles)
 
     # second pass using the unvisited nodes
     while len(not_visited_nodes_in_thread) > 0:
@@ -386,7 +367,6 @@ def thread_stat_12(nodes, root_nodes, pre_post, trig_desc, file_name, thread_no)
 
     pickle.dump(cycles, file)
     file.close()
-    #os.remove(tmp_file.name)
 
 
 # we split the entry point to threads, so the time for searching will be reduced
@@ -427,8 +407,6 @@ def stat_12(nodes, root_nodes, pre_post, trig_desc, no_threads):
     for i in threads:
         i[0].join()
 
-    #print('GATA')
-
     # reading the data from the temp files of the threads
     # after saving the data, the file is deleted
     # i[0] -> thread, i[1] -> thread_temp_file_name
@@ -438,14 +416,8 @@ def stat_12(nodes, root_nodes, pre_post, trig_desc, no_threads):
         file.close()
         os.remove(i[1])
 
-    #for i in rez:
-        #print(i)
-
     # unifying the results and deleting the duplicates and rotated versions of a cycle
     cycles = rez[0]
-    #for thread_list_index in range(1, no_threads):
-     #   for cycle in rez[thread_list_index]:
-      #      cycle_is_rotated(cycle)
 
     return cycles
 
@@ -490,7 +462,6 @@ def stat_14(nodes, pre_post, trig_desc):
                 else:
                     top_resources[node] = sum_value + 1     # sum of children + itself
             not_leaves_nodes = not_visited          # updating unvisited nodes
-            #print(not_leaves_nodes)
 
     return top_resources
 

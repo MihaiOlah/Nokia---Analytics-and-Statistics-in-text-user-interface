@@ -43,8 +43,6 @@ def parse_args():
                         help='Show statistics of the healed scenarios')
     parser.add_argument('-cpu', '--noCPU', type=int, metavar='', default=multiprocessing.cpu_count(),
                         help='Number of CPU used for multithreading')
-    #parser.add_argument('-v', '--verbose', action='store_true', default=False,
-                        #help='Show log for the most time consuming statistics')
 
     args = parser.parse_args()
 
@@ -64,8 +62,6 @@ def print_stat_0_4_formatted(result, run_on_scenario, case):             # forma
     else:
         print('id:04 | name:References not empty | description:Scenario(s) without other scenario(s) in the references.')
 
-   #print(case.upper())
-
     if run_on_scenario == 'all':
         for i in result:
             print('Nodes without {} {}'.format(case, i))
@@ -73,19 +69,15 @@ def print_stat_0_4_formatted(result, run_on_scenario, case):             # forma
     else:
         result_upper = [x.upper() for x in result]
         for j in run_on_scenario:
-            #j = j.upper()
             if j.upper() in result_upper:
                 print('Nodes without {} {}'.format(case, j))
                 cont = cont + 1
-                #intersection.append(j)
-        #print('Nodes without {} {}'.format(case, intersection))
 
     print("Results found: {}".format(str(cont)))
     print()
 
 
 def print_stat_5_8_formatted(result, case, run_on_scenario):
-    #print(case.upper())
     cont = 0
     if case=='precondition to postcondition link':
         print('id:05 | name:Link Pre-Condition to Post-Condition  | description:If S1 has S2 in Pre-conditions then S2 should have S1 in Post-conditions. S2->S1')
@@ -298,17 +290,12 @@ def check_options(options, nodes, run_on_scenario, pre_post, trig_desc, top, noC
     rez_stat_08 = stat_08(nodes)
     rez_stat_09 = stat_09(nodes)
 
-    #print(nodes['J65'])
-    #print(nodes['J64'])
-    #print(nodes['J67'])
-
     default_roots = set(rez_stat_00).intersection(rez_stat_01)
 
     # the se are most time consuming statistics, if the user doesn't ask for them, we don't need to compute them
     if 10 in options or 11 in options or 12 in options or 13 in options or 14 in options or 15 in options:
         rez_stat_12 = stat_12(nodes, default_roots, pre_post, trig_desc, noCPU)        # we run stat 12 first, because we need to know the cycles for stat 10
         rez_stat_10 = stat_10(nodes, default_roots, pre_post, trig_desc)
-        #rez_stat_12 = stat_12(nodes, set(rez_stat_00).intersection(rez_stat_01), pre_post, trig_desc)
         rez_stat_14 = stat_14(nodes, pre_post, trig_desc)
     else:
         rez_stat_10 = set()
@@ -327,16 +314,12 @@ def check_options(options, nodes, run_on_scenario, pre_post, trig_desc, top, noC
         elif i == 4:
             print_stat_0_4_formatted(stat_04(nodes), run_on_scenario, 'references')
         elif i == 5:
-            #print(stat_05(nodes))
             print_stat_5_8_formatted(rez_stat_05, 'precondition to postcondition link', run_on_scenario)
         elif i == 6:
-            #print(stat_06(nodes))
             print_stat_5_8_formatted(rez_stat_06, 'trigger to description link', run_on_scenario)
         elif i == 7:
-            #print(stat_07(nodes))
             print_stat_5_8_formatted(rez_stat_07, 'description to trigger link', run_on_scenario)
         elif i == 8:
-            #print(stat_08(nodes))
             print_stat_5_8_formatted(rez_stat_08, 'postcondition to precondition link', run_on_scenario)
         elif i == 9:
             invalid_references_self, invalid_references_to_others = rez_stat_09
