@@ -62,7 +62,7 @@ def print_stat_0_4_formatted(result, run_on_scenario, case):             # forma
     else:
         print('id:04 | name:References not empty | description:Scenario(s) without other scenario(s) in the references.')
 
-    if run_on_scenario == 'all':
+    if run_on_scenario == 'all' or len(run_on_scenario) == 0:
         for i in result:
             print('Nodes without {} {}'.format(case, i))
             cont = cont + 1
@@ -355,3 +355,30 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
