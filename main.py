@@ -88,7 +88,7 @@ def print_stat_5_8_formatted(result, case, run_on_scenario):
     elif case=='postcondition to precondition link':
         print('id:08 | name:Link Post-Condition to Pre-Condition  | description:If S1 has S2 in Post-conditions then S2 should have S1 in Pre-conditions. S1->S2')
 
-    if run_on_scenario == 'all':
+    if run_on_scenario == 'all' or len(run_on_scenario) == 0:
         for i in result.items():
             for j in i[1]:
                 print('Broken {} from {} to {}'.format(case, j, i[0]))
@@ -112,7 +112,7 @@ def print_stat_9_formatted(invalid_references_self, invalid_references_to_others
     has_printed = False
     cont = 0
 
-    if run_on_scenario == 'all':
+    if run_on_scenario == 'all' or len(run_on_scenario) == 0:
         # for each found, we display each value found
         for i in invalid_references_self.items():
             for reference in i[1]:
@@ -158,7 +158,7 @@ def print_stat_11_formatted(results, run_on_scenario):
     print('id:11 | name:Longest path contains scenario | description:The longest path as in a graph containing certain scenarios')
     cont = 0
 
-    if run_on_scenario == 'all':
+    if run_on_scenario == 'all' or len(run_on_scenario) == 0:
         for i in results:
             print(str(i)[1:-1])
             cont = cont + 1
@@ -186,7 +186,7 @@ def print_stat_13_formatted(results, run_on_scenario):
     print('id:13 | name:Circular paths contains scenario | description:Find all circular paths (the story never finish) containing a specific scenario')
     cont = 0
 
-    if run_on_scenario == 'all':
+    if run_on_scenario == 'all' or len(run_on_scenario) == 0:
         for i in results:
             print(str(i)[1:-1])
             cont = cont + 1
