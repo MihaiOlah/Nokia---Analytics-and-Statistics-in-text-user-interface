@@ -1,11 +1,41 @@
+import os
+import tempfile
 import xml.etree.ElementTree as ET
 from Node import *
+from pathlib import Path
 
+
+def replaceAmpersand(path):
+    file_in = open(path, 'r')
+    file_out = tempfile.NamedTemporaryFile(mode="w", suffix=".xml", delete=False)
+
+    while True:
+        line = file_in.readline()
+
+        if not line:
+            break
+
+        if "&" in line:
+            line = line.replace("&", "&#38;")
+
+        file_out.write(line)
+
+    temp_path = Path(file_out.name).resolve()
+
+    file_in.close()
+    file_out.close()
+
+    return temp_path
 
 # if a node appears more than once, the keep only the first occurrence
 def parse_xml(path):
-    tree = ET.parse(path)
+    temp_file = replaceAmpersand(path)          # making a temp file with text without &
+
+    # xmlp = ET.XMLParser(encoding='utf-8-sig')
+    tree = ET.parse(temp_file) #, parser=xmlp)
     root = tree.getroot()
+
+    os.remove(temp_file)
 
     nodes = dict()                                  # dictionary containg all nodes
     duplicates = dict()                             # dictionary containing all nodes' names that appear more than one time and how many times
@@ -27,6 +57,13 @@ def parse_xml(path):
             duplicates[node[0].text.upper()] = 2
         else:                                       # if the node appears more than two times, the number of appearances is updated
             duplicates[node[0].text.upper()] = duplicates.get(node[0].text.upper()) + 1
+
+    # replace &#38; with &
+    for node in nodes.values():
+        link = node.get_link()
+        if "&#38;" in link:
+            link = link.replace("&#38;", "&")
+            node.set_link(link)
 
     return nodes, duplicates
 

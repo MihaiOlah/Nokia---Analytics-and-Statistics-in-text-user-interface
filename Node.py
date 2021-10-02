@@ -18,6 +18,9 @@ class Node:
     def get_name(self):
         return self.name
 
+    def get_link(self):
+        return self.link
+
     def get_preconditions(self):
         return self.preconditions
 
@@ -47,6 +50,9 @@ class Node:
 
     def remove_references(self, node):
         self.references.remove(node)
+
+    def set_link(self, link):
+        self.link = link
 
     def set_preconditions(self, preconditions):
         self.preconditions = list(preconditions)

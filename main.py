@@ -8,12 +8,12 @@ import multiprocessing
 # parsing of the line arguments
 def parse_args():
     parser = argparse.ArgumentParser(description='Analystics and statistics options and XML file\'s path'
-            '\nID = 00 | Name = Pre-condition not empty | Description = Scenario(s) without other scenario(s) in the pre-conditions '
+            '\nID = 00 | Name = Precondition not empty | Description = Scenario(s) without other scenario(s) in the preconditions '
             '\nID = 01 | Name = Triggers not empty | Description = Scenario(s) without other scenario(s) in the triggers.'
             '\nID = 02 | Name = Description not empty | Description = Scenario(s) without other scenario(s) in the description.'
-            '\nID = 03 | Name = Post-condition not empty | Description = Scenario(s) without other scenario(s) in the post-conditions.'
+            '\nID = 03 | Name = Postcondition not empty | Description = Scenario(s) without other scenario(s) in the postconditions.'
             '\nID = 04 | Name = References not empty | Description = Scenario(s) without other scenario(s) in the references.'
-            '\nID = 05 | Name = Link Pre-Condition to Post-Condition | Description = If S1 has S2 in Pre-conditions then S2 should have S1 in Post-conditions. S2->S1.'
+            '\nID = 05 | Name = Link precondition to postcondition | Description = If S1 has S2 in Pre-conditions then S2 should have S1 in postconditions. S2->S1.'
             '\nID = 06 | Name = Link Trigger to Description | Description = If S1 has S2 in Triggers S2 then S2 should have S1 in Description. S2->S1.'
             '\nID = 07 | Name = Link Description to Trigger | Description = If S1 has S2 in Description then S2 should have S1 in Triggers. S1->S2.'
             '\nID = 08 | Name = Link Post-Condition to Pre-Condition | Description = If S1 has S2 in Post-conditions then S2 should have S1 in Pre-conditions. S1->S2.'
@@ -52,13 +52,13 @@ def parse_args():
 def print_stat_0_4_formatted(result, run_on_scenario, case):             # formatted display for statistics 0-4
     cont = 0
     if case=='preconditions':
-        print('id:00 | name:Pre-condition not empty | description:Scenario(s) without other scenario(s) in the pre-conditions')
+        print('id:00 | name: Precondition not empty | description: Scenario(s) without other scenario(s) in the preconditions')
     elif case=='triggers':
-        print('id:01 | name:Triggers not empty | description:Scenario(s) without other scenario(s) in the triggers.')
+        print('id:01 | name: Triggers not empty | description: Scenario(s) without other scenario(s) in the triggers.')
     elif case=='description':
-        print('id:02 | name:Description not empty | description:Scenario(s) without other scenario(s) in the description.')
+        print('id:02 | name: Description not empty | description: Scenario(s) without other scenario(s) in the description.')
     elif case=='postconditions':
-        print('id:03 | name:Post-condition not empty | description:Scenario(s) without other scenario(s) in the post-conditions.')
+        print('id:03 | name: Postcondition not empty | description: Scenario(s) without other scenario(s) in the postconditions.')
     else:
         print('id:04 | name:References not empty | description:Scenario(s) without other scenario(s) in the references.')
 
@@ -80,13 +80,13 @@ def print_stat_0_4_formatted(result, run_on_scenario, case):             # forma
 def print_stat_5_8_formatted(result, case, run_on_scenario):
     cont = 0
     if case=='precondition to postcondition link':
-        print('id:05 | name:Link Pre-Condition to Post-Condition  | description:If S1 has S2 in Pre-conditions then S2 should have S1 in Post-conditions. S2->S1')
+        print('id:05 | name: Link precondition to postcondition  | description: If S1 has S2 in preconditions then S2 should have S1 in postconditions. S2->S1')
     elif case=='trigger to description link':
-        print('id:06 | name:Link Trigger to Description | description:If S1 has S2 in Triggers S2 then S2 should have S1 in Description. S2->S1')
+        print('id:06 | name: Link trigger to description | description: If S1 has S2 in triggers S2 then S2 should have S1 in description. S2->S1')
     elif case=='description to trigger link':
-        print('id:07 | name:Link Description to Trigger | description:If S1 has S2 in Description then S2 should have S1 in Triggers. S1->S2')
+        print('id:07 | name: Link Description to trigger | description: If S1 has S2 in description then S2 should have S1 in triggers. S1->S2')
     elif case=='postcondition to precondition link':
-        print('id:08 | name:Link Post-Condition to Pre-Condition  | description:If S1 has S2 in Post-conditions then S2 should have S1 in Pre-conditions. S1->S2')
+        print('id:08 | name: Link postcondition to precondition  | description: If S1 has S2 in postcconditions then S2 should have S1 in preconditions. S1->S2')
 
     if run_on_scenario == 'all' or len(run_on_scenario) == 0:
         for i in result.items():
@@ -107,8 +107,8 @@ def print_stat_5_8_formatted(result, case, run_on_scenario):
 
 
 def print_stat_9_formatted(invalid_references_self, invalid_references_to_others, run_on_scenario):
-    print('id:09 | name:Link References | description:If S1 has S2 in References then: S1 should also have S2 mentioned '
-          'in Pre-Conditions | Triggers | Description | Post-conditions and  S2 should have S1 mentioned in Pre-Conditions | Triggers | Description | Post-conditions')
+    print('id:09 | name: Link references | description: If S1 has S2 in references then: S1 should also have S2 mentioned '
+          'in Preconditions | Triggers | Description | Postconditions and  S2 should have S1 mentioned in Preconditions | Triggers | Description | Postconditions')
     has_printed = False
     cont = 0
 
@@ -155,7 +155,7 @@ def print_stat_10_formatted(results):
 
 
 def print_stat_11_formatted(results, run_on_scenario):
-    print('id:11 | name:Longest path contains scenario | description:The longest path as in a graph containing certain scenarios')
+    print('id:11 | name: Longest path contains scenario | description: The longest path as in a graph containing certain scenarios')
     cont = 0
 
     if run_on_scenario == 'all' or len(run_on_scenario) == 0:
@@ -174,7 +174,7 @@ def print_stat_11_formatted(results, run_on_scenario):
 
 
 def print_stat_12_formatted(results):
-    print('id:12 | name:Circular paths contains scenario | description:Find all circular paths (the story never finish)')
+    print('id:12 | name: Circular paths contains scenario | description: Find all circular paths (the story never finish)')
 
     for i in results:
         print(str(i)[1:-1])
@@ -183,7 +183,7 @@ def print_stat_12_formatted(results):
 
 
 def print_stat_13_formatted(results, run_on_scenario):
-    print('id:13 | name:Circular paths contains scenario | description:Find all circular paths (the story never finish) containing a specific scenario')
+    print('id:13 | name: Circular paths contains scenario | description: Find all circular paths (the story never finish) containing a specific scenario')
     cont = 0
 
     if run_on_scenario == 'all' or len(run_on_scenario) == 0:
@@ -202,7 +202,7 @@ def print_stat_13_formatted(results, run_on_scenario):
 
 
 def print_stat_14_formatted(results, top):
-    print('id:14 | name: The top of the most constly nodes | description = Shows all the nodes that were called starting with the current node')
+    print('id:14 | name: The top of the most costly nodes | description: Shows all the nodes that were called starting with the current node')
     cont = 0
 
     top_values = list(set(results.values()))      # set containing the unique values
@@ -229,7 +229,7 @@ def print_stat_14_formatted(results, top):
 
 
 def print_stat_15_formatted(results, top, run_on_scenario):
-    print('id:15 | name: The top of the most constly nodes | description = Shows the most consuming nodes given by the user from command line')
+    print('id:15 | name: The top of the most costly nodes | description: Shows the most consuming nodes given by the user from command line')
     cont = 0
 
     top_values = list(set(results.values()))      # set containing the unique values
@@ -355,30 +355,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

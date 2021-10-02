@@ -464,6 +464,3 @@ def stat_14(nodes, pre_post, trig_desc):
             not_leaves_nodes = not_visited          # updating unvisited nodes
 
     return top_resources
-
-
-
